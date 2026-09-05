@@ -957,4 +957,35 @@ void main() {
       }
     });
   });
+
+  group('filled surfaces', () {
+    testWidgets('a prominent button draws its edge from its own fill',
+        (tester) async {
+      final colors = GlimmerColors.standard();
+
+      await tester.pumpWidget(
+        host(
+          Column(
+            children: [
+              GlimmerButton(
+                label: 'Prominent',
+                prominent: true,
+                onPressed: () {},
+              ),
+              GlimmerButton(label: 'Neutral', onPressed: () {}),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The neutral button keeps the published grey edge; the prominent one
+      // gets a translucent edge derived from the focal colour, so the border
+      // reads as light on the fill rather than as a ring of its own.
+      final derived = GlimmerEdge.onFill(colors.primary);
+      expect(derived.topRight, isNot(const GlimmerEdge.idle().topRight));
+      expect(derived.topRight.a, lessThan(1));
+      expect(find.byType(GlimmerSurface), findsNWidgets(2));
+    });
+  });
 }

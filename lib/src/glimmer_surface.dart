@@ -264,15 +264,24 @@ class _GlimmerSurfaceState extends State<GlimmerSurface>
     required double ambient,
     required Color focal,
     required Color? override,
+    required Color? fill,
   }) {
-    final idle = override == null
-        ? const GlimmerEdge.idle()
-        : GlimmerEdge(
-            topLeft: override,
-            topRight: override,
-            bottomRight: override,
-            bottomLeft: override,
-          );
+    final GlimmerEdge idle;
+    if (override != null) {
+      idle = GlimmerEdge(
+        topLeft: override,
+        topRight: override,
+        bottomRight: override,
+        bottomLeft: override,
+      );
+    } else if (fill != null) {
+      // A surface with a fill of its own gets an edge derived from that fill,
+      // so the border reads as light landing on the colour rather than as a
+      // grey ring with a colour of its own.
+      idle = GlimmerEdge.onFill(fill);
+    } else {
+      idle = const GlimmerEdge.idle();
+    }
     final edge = GlimmerEdge.lerp(
       idle,
       GlimmerEdge.focused(focal),
@@ -387,6 +396,8 @@ class _GlimmerSurfaceState extends State<GlimmerSurface>
                       ambient: ambient,
                       focal: focalEdge,
                       override: widget.borderColor,
+                      fill:
+                          widget.color == colors.surface ? null : widget.color,
                     ),
                     edgeWidth: lerpDouble(
                       GlimmerMotion.borderWidth,

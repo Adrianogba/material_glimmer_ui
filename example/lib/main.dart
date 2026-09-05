@@ -171,8 +171,8 @@ class _OverviewPageState extends State<_OverviewPage> {
                     const GlimmerCard(
                       opacity: 0.2,
                       blur: 36,
-                      title: 'Santos, 24 graus',
-                      supportingText: 'Sol firme o dia inteiro',
+                      title: 'Santos, 24 degrees',
+                      supportingText: 'Clear sun all day',
                       leadingIcon: Icons.wb_sunny_outlined,
                     ),
                   ],
@@ -189,7 +189,7 @@ class _OverviewPageState extends State<_OverviewPage> {
           focused: _saved,
           onTap: () => setState(() => _saved = !_saved),
           title: 'Jabuticaba',
-          supportingText: 'Feira da Paulista, R\$18 the kilo',
+          supportingText: 'Paulista street market, R\$18 a kilo',
           leadingIcon: Icons.local_grocery_store_outlined,
         ),
         SizedBox(height: spacing.medium),
@@ -222,8 +222,7 @@ class _OverviewPageState extends State<_OverviewPage> {
           children: const [
             GlimmerCard(
               title: 'Rafa',
-              supportingText:
-                  'Quer alguma coisa da padaria? Estou na fila agora.',
+              supportingText: 'Anything from the bakery? I am in the queue.',
               leadingIcon: Icons.chat_bubble_outline,
             ),
             GlimmerCard(
@@ -232,8 +231,8 @@ class _OverviewPageState extends State<_OverviewPage> {
               leadingIcon: Icons.music_note_outlined,
             ),
             GlimmerCard(
-              title: 'Feira de sábado',
-              supportingText: 'Jabuticaba, mamão, couve, pão de queijo',
+              title: 'Saturday market',
+              supportingText: 'Jabuticaba, papaya, kale, pão de queijo',
               leadingIcon: Icons.checklist,
             ),
           ],
@@ -265,17 +264,17 @@ class _ComponentsPageState extends State<_ComponentsPage> {
   var _progress = 0.4;
 
   static const _pagerPages = <(String, String, IconData)>[
-    ('Museu do Café', 'Santos, aberto até as 17h', Icons.museum_outlined),
-    ('Pinacoteca', 'Luz, exposição nova', Icons.palette_outlined),
-    ('Mercado Municipal', 'Centro, sanduíche de mortadela', Icons.storefront),
+    ('Museu do Café', 'Santos, open until five', Icons.museum_outlined),
+    ('Pinacoteca', 'Luz, new exhibition', Icons.palette_outlined),
+    ('Mercado Municipal', 'Centro, mortadella sandwich', Icons.storefront),
   ];
 
   static const _groceries = [
     'Pão de queijo',
     'Jabuticaba',
-    'Mamão',
-    'Couve',
-    'Café',
+    'Papaya',
+    'Kale',
+    'Coffee',
   ];
 
   @override
@@ -388,7 +387,7 @@ class _ComponentsPageState extends State<_ComponentsPage> {
         ),
         SizedBox(height: spacing.medium),
         const GlimmerTextField(
-          label: 'Adicionar um item',
+          label: 'Add an item',
           prefixIcon: Icons.add,
         ),
         SizedBox(height: spacing.medium),

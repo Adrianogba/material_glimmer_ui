@@ -340,6 +340,30 @@ void main() {
       }
     });
 
+    test('an edge on a fill is derived from it and stays translucent', () {
+      const fill = Color(0xFF9BBFFF);
+      final edge = GlimmerEdge.onFill(fill);
+
+      // The lit corner is a white highlight; the rest are the fill's own tone
+      // moved up and down. Every stop is translucent so the fill is still the
+      // colour you see, rather than a grey ring drawn around it.
+      expect(edge.topLeft.toARGB32() & 0x00FFFFFF, 0x00FFFFFF);
+      for (final corner in edge.corners) {
+        expect(corner.a, lessThan(0.6), reason: 'edge stop is too solid');
+      }
+      expect(edge.topRight.tone, greaterThan(fill.tone));
+      expect(edge.bottomRight.tone, lessThan(fill.tone));
+      expect(edge.bottomLeft.tone, lessThan(fill.tone));
+    });
+
+    test('an edge on a fill keeps the fill hue', () {
+      const fill = Color(0xFF63FEA8);
+      final edge = GlimmerEdge.onFill(fill);
+      // Green in, green out: the lift and the drop move lightness, not hue.
+      expect(edge.topRight.g, greaterThan(edge.topRight.r));
+      expect(edge.bottomRight.g, greaterThan(edge.bottomRight.r));
+    });
+
     test('blur sharpens on focus and blooms on the ambient sweep', () {
       expect(GlimmerEdgeBlur.resolve(0, 0), GlimmerEdgeBlur.idleEnd);
       expect(GlimmerEdgeBlur.resolve(1, 0), GlimmerEdgeBlur.focusedEnd);

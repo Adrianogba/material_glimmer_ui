@@ -50,6 +50,27 @@ class GlimmerEdge {
         bottomLeft: focal.withTone(77),
       );
 
+  /// An edge for a surface that carries a fill of its own.
+  ///
+  /// The resting edge is a fixed set of greys, which is right on the neutral
+  /// surface it was chosen for and wrong on anything else: over a coloured fill
+  /// it reads as a grey ring drawn around the component rather than as light
+  /// landing on it.
+  ///
+  /// This derives the edge from the fill instead, and keeps every stop
+  /// translucent so the fill stays the colour you see. The lit corner is a white
+  /// highlight, the corner beside it lifts the fill's own tone, and the far side
+  /// drops it.
+  factory GlimmerEdge.onFill(Color fill) {
+    final tone = fill.tone;
+    return GlimmerEdge(
+      topLeft: const Color(0xFFFFFFFF).withValues(alpha: 0.55),
+      topRight: fill.withTone(math.min(100, tone + 14)).withValues(alpha: 0.4),
+      bottomRight: fill.withTone(math.max(0, tone - 16)).withValues(alpha: 0.3),
+      bottomLeft: fill.withTone(math.max(0, tone - 6)).withValues(alpha: 0.36),
+    );
+  }
+
   /// The lit corner.
   final Color topLeft;
 
