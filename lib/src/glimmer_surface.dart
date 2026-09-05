@@ -501,12 +501,35 @@ class _GlimmerSurfaceShadows extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (shadows.isEmpty) return;
     final rrect = radius.toRRect(Offset.zero & size);
+
+    // The shadow is drawn only outside the surface's own shape. Under an opaque
+    // fill it was invisible either way, but a glass surface reads what is
+    // painted behind it, so a shadow left underneath gets pulled into its own
+    // blur and washes the panel black. Clipping it out is also what a drop
+    // shadow means: it falls around the thing, not under it.
+    var reach = 0.0;
+    for (final shadow in shadows) {
+      reach = math.max(
+        reach,
+        shadow.blurRadius + shadow.spreadRadius + shadow.offset.distance,
+      );
+    }
+    final outside = Path.combine(
+      PathOperation.difference,
+      Path()..addRect((Offset.zero & size).inflate(reach + 1)),
+      Path()..addRRect(rrect),
+    );
+
+    canvas
+      ..save()
+      ..clipPath(outside);
     for (final shadow in shadows) {
       canvas.drawRRect(
         rrect.shift(shadow.offset).inflate(shadow.spreadRadius),
         shadow.toPaint(),
       );
     }
+    canvas.restore();
   }
 
   @override

@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_glimmer_ui/material_glimmer_ui.dart';
 
@@ -986,6 +989,67 @@ void main() {
       expect(derived.topRight, isNot(const GlimmerEdge.idle().topRight));
       expect(derived.topRight.a, lessThan(1));
       expect(find.byType(GlimmerSurface), findsNWidgets(2));
+    });
+  });
+
+  group('glass', () {
+    // A drop shadow used to be painted under the surface as well as around it.
+    // Under an opaque fill that was invisible; under glass the surface read its
+    // own shadow as part of the backdrop, blurred it in, and washed itself
+    // black. Nothing structural catches that, so this looks at the pixels.
+    testWidgets('a surface does not darken itself with its own shadow',
+        (tester) async {
+      const backdrop = Color(0xFFB08030);
+      final key = GlobalKey();
+
+      await tester.pumpWidget(
+        GlimmerApp(
+          home: GlimmerScaffold(
+            body: RepaintBoundary(
+              key: key,
+              child: const ColoredBox(
+                color: backdrop,
+                child: Center(
+                  child: SizedBox(
+                    width: 220,
+                    height: 140,
+                    child: GlimmerCard(title: 'Glass'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      late final ByteData pixels;
+      await tester.runAsync(() async {
+        final boundary =
+            key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+        final image = await boundary.toImage();
+        pixels = (await image.toByteData())!;
+      });
+
+      final size = tester.getSize(find.byKey(key));
+      int luminanceAt(int x, int y) {
+        final offset = ((y * size.width.toInt()) + x) * 4;
+        final r = pixels.getUint8(offset);
+        final g = pixels.getUint8(offset + 1);
+        final b = pixels.getUint8(offset + 2);
+        return r + g + b;
+      }
+
+      final inside = luminanceAt(size.width ~/ 2, size.height ~/ 2);
+      final outside = luminanceAt(8, 8);
+
+      // The surface composites additively, so over a flat backdrop it can only
+      // hold steady or lift. Any drop means something dark is being blurred in.
+      expect(
+        inside,
+        greaterThanOrEqualTo(outside),
+        reason: 'the surface is darker than the backdrop behind it',
+      );
     });
   });
 }

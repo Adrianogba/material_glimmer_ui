@@ -48,6 +48,7 @@ under Apache 2.0, and this package is MIT.
 | Progressive border blur | per-pixel in the shader | two strokes, soft under sharp | A single stroke cannot vary its blur along its own length. |
 | `withTone` | HCT, with a CAM16 gamut solve | CIELAB L\*, keeping a\* and b\* | Tone is defined as L\* and `HctUtils` uses the same Epsilon and Kappa. The gamut solve is not reproduced; colours pushed out of sRGB are clamped per channel instead. The shifts Glimmer actually performs are small enough that the two agree. |
 | Overscroll | not applicable | glow, never stretch | The stretch renders scrolling content into an offscreen layer, which leaves a surface with no backdrop to read and flattens every glass panel on screen. |
+| Drop shadows | drawn behind the component | clipped to outside its shape | A glass surface reads what is painted behind it, so a shadow left underneath is blurred into the surface's own fill and washes it black. |
 | Focus | roving, follows the wearer | driven by selection and keyboard focus | A phone has no gaze or touchpad. |
 
 ## Deliberately not translated

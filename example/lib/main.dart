@@ -164,13 +164,12 @@ class _OverviewPageState extends State<_OverviewPage> {
                       leadingIcon: Icons.directions_walk,
                     ),
                     SizedBox(height: spacing.medium),
-                    // The same card at a far lower tint and a wider blur.
-                    // Glimmer's own examples sit closer to this end: the
-                    // backdrop is most of what you see, and the surface is
-                    // mostly its lit edge.
+                    // No tint at all: the surface adds nothing and only blurs
+                    // what is behind it, so all there is to see is the backdrop
+                    // out of focus and the lit edge around it.
                     const GlimmerCard(
-                      opacity: 0.2,
-                      blur: 36,
+                      opacity: 0,
+                      blur: 22,
                       title: 'Santos, 24 degrees',
                       supportingText: 'Clear sun all day',
                       leadingIcon: Icons.wb_sunny_outlined,
