@@ -1,0 +1,36 @@
+name: material_glimmer
+description: An adaptation of Glimmer, Google's new design language, mixed with Material Design Expressive. A Flutter widget set for phones, chosen the way you choose Material or Cupertino.
+version: 1.0.0
+homepage: https://github.com/Adrianogba/material_glimmer
+repository: https://github.com/Adrianogba/material_glimmer
+issue_tracker: https://github.com/Adrianogba/material_glimmer/issues
+funding:
+  - https://github.com/sponsors/Adrianogba
+
+topics:
+  - glimmer
+  - design-system
+  - ui
+  - theme
+  - widgets
+
+platforms:
+  android:
+  ios:
+  linux:
+  macos:
+  web:
+  windows:
+
+environment:
+  sdk: ^3.6.0
+  flutter: ">=3.27.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter

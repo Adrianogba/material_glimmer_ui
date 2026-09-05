@@ -1,0 +1,19 @@
+# The example app's build output and platform scaffolding are not useful to
+# anyone installing the package.
+example/build/
+example/android/
+example/ios/
+example/linux/
+example/macos/
+example/windows/
+example/web/
+example/.dart_tool/
+example/pubspec.lock
+.idea/
+*.iml
+build/
+
+# A local mirror of the androidx.xr.glimmer sources, kept for reference while
+# translating. It is Google's code under Apache 2.0, not ours, so it is not
+# committed and not published. Recreate it with tool/fetch_reference.dart.
+reference/
