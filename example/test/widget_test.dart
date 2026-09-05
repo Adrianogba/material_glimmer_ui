@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_glimmer/material_glimmer.dart';
-import 'package:material_glimmer_example/main.dart';
+import 'package:material_glimmer_ui/material_glimmer_ui.dart';
+import 'package:material_glimmer_ui_example/main.dart';
 
 void main() {
   testWidgets('the gallery opens on the overview page', (tester) async {
     await tester.pumpWidget(const MaterialGlimmerGallery());
     await tester.pump(const Duration(seconds: 1));
 
-    expect(find.text('Material Glimmer'), findsOneWidget);
+    expect(find.text('Material Glimmer UI'), findsOneWidget);
     expect(find.text('Museu do Café'), findsOneWidget);
     expect(find.byType(GlimmerCard), findsWidgets);
   });

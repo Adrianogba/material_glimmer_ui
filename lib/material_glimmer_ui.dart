@@ -1,9 +1,9 @@
-/// An adaptation of Glimmer, Google's new design language, mixed with Material
+/// A UI kit adapting Glimmer, Google's new design language, mixed with Material
 /// Design Expressive.
 ///
-/// A design system for Flutter apps: a theme, a full token set and a widget
-/// library, picked the same way you pick Material or Cupertino. Everything is
-/// drawn rather than shipped as assets, and the only dependency is Flutter.
+/// A UI kit for Flutter apps: a theme, a full token set and a widget library,
+/// picked the same way you pick Material or Cupertino. Everything is drawn
+/// rather than shipped as assets, and the only dependency is Flutter.
 ///
 /// The look comes from Glimmer, the design language Google built for its
 /// display glasses. Surfaces add light instead of blocking it, focus is an

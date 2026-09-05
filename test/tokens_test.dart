@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_glimmer/material_glimmer.dart';
+import 'package:material_glimmer_ui/material_glimmer_ui.dart';
 
 /// These tests pin the values this package claims to take from Jetpack Compose
 /// Glimmer. If upstream changes, they should fail and the README's fidelity

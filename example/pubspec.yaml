@@ -1,5 +1,5 @@
-name: material_glimmer_example
-description: Gallery for material_glimmer, with a Material and Glimmer comparison toggle.
+name: material_glimmer_ui_example
+description: Gallery for material_glimmer_ui, showing every component in both themes and both scales.
 publish_to: none
 version: 1.0.0
 
@@ -10,7 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  material_glimmer:
+  material_glimmer_ui:
     path: ../
 
 dev_dependencies:

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:material_glimmer/material_glimmer.dart';
+import 'package:material_glimmer_ui/material_glimmer_ui.dart';
 
 void main() => runApp(const MaterialGlimmerGallery());
 
@@ -19,7 +19,7 @@ class _MaterialGlimmerGalleryState extends State<MaterialGlimmerGallery> {
   @override
   Widget build(BuildContext context) {
     return GlimmerApp(
-      title: 'Material Glimmer',
+      title: 'Material Glimmer UI',
       debugShowCheckedModeBanner: false,
       scale: _scale,
       themeMode: _mode,
@@ -68,7 +68,7 @@ class _GalleryHomeState extends State<_GalleryHome> {
 
     return GlimmerScaffold(
       backdrop: const GlimmerBackdrop(),
-      title: 'Material Glimmer',
+      title: 'Material Glimmer UI',
       action: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -639,7 +639,7 @@ class _AboutSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('material_glimmer', style: tokens.typography.titleMedium),
+            Text('material_glimmer_ui', style: tokens.typography.titleMedium),
             SizedBox(height: tokens.spacing.extraSmall),
             Text(
               'Version 1.0.0 · MIT',

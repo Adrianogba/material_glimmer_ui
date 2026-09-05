@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_glimmer/material_glimmer.dart';
+import 'package:material_glimmer_ui/material_glimmer_ui.dart';
 
 Widget host(Widget child, {GlimmerScale scale = GlimmerScale.mobile}) {
   return MaterialApp(

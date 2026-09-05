@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "material_glimmer" "\0"
+            VALUE "FileDescription", "material_glimmer_ui" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "material_glimmer" "\0"
+            VALUE "InternalName", "material_glimmer_ui" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "material_glimmer.exe" "\0"
-            VALUE "ProductName", "material_glimmer" "\0"
+            VALUE "OriginalFilename", "material_glimmer_ui.exe" "\0"
+            VALUE "ProductName", "material_glimmer_ui" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

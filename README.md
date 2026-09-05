@@ -1,21 +1,21 @@
-<h1 align="center">Material Glimmer</h1>
+<h1 align="center">Material Glimmer UI</h1>
 
 <p align="center">
-  An adaptation of Glimmer, Google's new design language,<br>
+  A UI kit adapting Glimmer, Google's new design language,<br>
   mixed with Material Design Expressive.
 </p>
 
 <p align="center">
-  <a href="https://pub.dev/packages/material_glimmer"><img src="https://img.shields.io/pub/v/material_glimmer.svg" alt="pub"></a>
-  <a href="https://pub.dev/packages/material_glimmer"><img src="https://img.shields.io/badge/platforms-Android%20%7C%20iOS%20%7C%20Web%20%7C%20Windows%20%7C%20macOS%20%7C%20Linux-1575F9" alt="platforms"></a>
-  <a href="https://github.com/Adrianogba/material_glimmer/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="license"></a>
+  <a href="https://pub.dev/packages/material_glimmer_ui"><img src="https://img.shields.io/pub/v/material_glimmer_ui.svg" alt="pub"></a>
+  <a href="https://pub.dev/packages/material_glimmer_ui"><img src="https://img.shields.io/badge/platforms-Android%20%7C%20iOS%20%7C%20Web%20%7C%20Windows%20%7C%20macOS%20%7C%20Linux-1575F9" alt="platforms"></a>
+  <a href="https://github.com/Adrianogba/material_glimmer_ui/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="license"></a>
 </p>
 
 ## What it is
 
-A design system for Flutter apps: a theme, a full token set and a widget
-library, picked the same way you pick Material or Cupertino. Everything is
-drawn, not shipped as assets, and the only dependency is Flutter itself.
+A UI kit for Flutter apps: a theme, a full token set and a widget library,
+picked the same way you pick Material or Cupertino. Everything is drawn, not
+shipped as assets, and the only dependency is Flutter itself.
 
 The look comes from **Glimmer**, the design language Google built for its
 display glasses. Surfaces add light instead of blocking it. Focus is an outline
@@ -34,14 +34,14 @@ pose or a touchpad, and none of it needs an XR device.
 ## Install
 
 ```sh
-flutter pub add material_glimmer
+flutter pub add material_glimmer_ui
 ```
 
 ## Usage
 
 ```dart
 import 'package:flutter/material.dart';
-import 'package:material_glimmer/material_glimmer.dart';
+import 'package:material_glimmer_ui/material_glimmer_ui.dart';
 
 GlimmerApp(
   title: 'Bakery',
@@ -233,7 +233,7 @@ nothing is isolated. Pass your own `scrollBehavior` to opt out.
 
 ## License
 
-MIT. See [LICENSE](https://github.com/Adrianogba/material_glimmer/blob/main/LICENSE).
+MIT. See [LICENSE](https://github.com/Adrianogba/material_glimmer_ui/blob/main/LICENSE).
 
 Jetpack Compose Glimmer belongs to Google, under Apache 2.0. This is an
 independent package, not affiliated with Google. No Glimmer code was copied. The
