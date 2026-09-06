@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -184,8 +185,12 @@ class _GlimmerOverscrollPainter extends CustomPainter {
 
     // The bloom falls away from the edge and also away from the middle, so the
     // light is brightest exactly where the line is being pushed.
+    // saveLayer, not save. The mask below composes with BlendMode.dstIn, and
+    // on the bare canvas that would take the alpha out of everything already
+    // painted under the bloom rather than out of the bloom itself, leaving a
+    // black band across the top of the page.
     canvas
-      ..save()
+      ..saveLayer(band, Paint())
       ..clipRect(band)
       ..drawRect(
         band,
@@ -251,4 +256,166 @@ class _GlimmerOverscrollPainter extends CustomPainter {
       old.trailing != trailing ||
       old.color != color ||
       old.axisDirection != axisDirection;
+}
+
+/// Pull past the top of a list to refresh it.
+///
+/// Material spins a circle on a card that slides down over the content, and
+/// Cupertino drops a spinner into a gap it opens above it. Both move something,
+/// and this kit does not move content: the same edge light
+/// [GlimmerOverscrollIndicator] uses says how far the pull has gone, reaches
+/// full brightness at [triggerDistance], and then breathes on the ambient
+/// envelope while the refresh runs.
+///
+/// So the whole gesture is one continuous piece of light. Pushing a list that
+/// cannot refresh lights the edge and lets go; pushing one that can lights the
+/// edge, holds, and pulses until the work is done.
+///
+/// Wrap the scrollable, the way you would wrap it in a `RefreshIndicator`:
+///
+/// ```dart
+/// GlimmerRefreshIndicator(
+///   onRefresh: () => model.reload(),
+///   child: GlimmerList(children: rows),
+/// )
+/// ```
+///
+/// The scrollable needs to reach its edge for a pull to register, so give it
+/// [AlwaysScrollableScrollPhysics] if it might hold less than one screen.
+class GlimmerRefreshIndicator extends StatefulWidget {
+  /// Creates a refresh indicator around [child].
+  const GlimmerRefreshIndicator({
+    super.key,
+    required this.child,
+    required this.onRefresh,
+    this.color,
+  });
+
+  /// The scrollable being wrapped.
+  final Widget child;
+
+  /// Called once the pull passes [triggerDistance] and the finger lifts.
+  ///
+  /// The edge holds and pulses until the returned future completes.
+  final Future<void> Function() onRefresh;
+
+  /// The colour of the light. Defaults to [GlimmerColors.primary].
+  final Color? color;
+
+  /// How far the list has to be pulled to arm a refresh.
+  ///
+  /// Shorter than [GlimmerOverscrollIndicator.pullDistance], so a pull that
+  /// arms one is a deliberate gesture rather than the end of a fling.
+  static const triggerDistance = 120.0;
+
+  /// The floor the light holds at while the refresh runs.
+  ///
+  /// It breathes between this and full on [GlimmerMotion.ambientEnvelope], so
+  /// a list that is working never looks like a list that has simply stopped.
+  static const workingFloor = 0.55;
+
+  @override
+  State<GlimmerRefreshIndicator> createState() =>
+      _GlimmerRefreshIndicatorState();
+}
+
+class _GlimmerRefreshIndicatorState extends State<GlimmerRefreshIndicator>
+    with TickerProviderStateMixin {
+  late final AnimationController _pull = AnimationController.unbounded(
+    vsync: this,
+  )..addListener(_repaint);
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: GlimmerMotion.ambientPulseDuration,
+  )..addListener(_repaint);
+
+  bool _armed = false;
+  bool _refreshing = false;
+
+  void _repaint() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _pull.dispose();
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  bool _onNotification(ScrollNotification notification) {
+    if (notification.depth != 0 || _refreshing) return false;
+
+    if (notification is OverscrollNotification) {
+      // Only the leading edge arms a refresh. Running off the bottom of a list
+      // is a different gesture with a different meaning.
+      if (notification.overscroll >= 0) return false;
+      _pull
+        ..stop()
+        ..value = (_pull.value +
+                (-notification.overscroll /
+                    GlimmerRefreshIndicator.triggerDistance))
+            .clamp(0.0, 1.0);
+      _armed = _pull.value >= 1;
+    } else if (notification is ScrollEndNotification) {
+      if (_armed) {
+        unawaited(_run());
+      } else {
+        _settle();
+      }
+    }
+    return false;
+  }
+
+  void _settle() {
+    _armed = false;
+    if (_pull.value == 0) return;
+    _pull.animateWith(
+      SpringSimulation(GlimmerMotion.settleSpring, _pull.value, 0, 0),
+    );
+  }
+
+  Future<void> _run() async {
+    _armed = false;
+    _refreshing = true;
+    _pull
+      ..stop()
+      ..value = 1;
+    _pulse.repeat();
+    try {
+      await widget.onRefresh();
+    } finally {
+      if (mounted) {
+        _pulse.stop();
+        _pulse.value = 0;
+        _refreshing = false;
+        _settle();
+      }
+    }
+  }
+
+  /// How bright the edge is right now.
+  double get _strength {
+    if (!_refreshing) return _pull.value.clamp(0.0, 1.0);
+    const floor = GlimmerRefreshIndicator.workingFloor;
+    return floor + ((1 - floor) * GlimmerMotion.ambientEnvelope(_pulse.value));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = GlimmerTheme.colorsOf(context);
+
+    return NotificationListener<ScrollNotification>(
+      onNotification: _onNotification,
+      child: CustomPaint(
+        foregroundPainter: _GlimmerOverscrollPainter(
+          axisDirection: AxisDirection.down,
+          color: widget.color ?? colors.primary,
+          leading: _strength,
+          trailing: 0,
+        ),
+        child: widget.child,
+      ),
+    );
+  }
 }

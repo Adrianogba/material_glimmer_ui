@@ -108,6 +108,7 @@ class _OverviewPage extends StatefulWidget {
 class _OverviewPageState extends State<_OverviewPage> {
   var _saved = false;
   var _stackIndex = 0;
+  var _refreshed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -115,126 +116,140 @@ class _OverviewPageState extends State<_OverviewPage> {
     final type = tokens.typography;
     final spacing = tokens.spacing;
 
-    return ListView(
-      padding: EdgeInsets.fromLTRB(spacing.large, 24, spacing.large, 24),
-      children: [
-        Text('An interface\nwith atmosphere.', style: type.titleLarge),
-        SizedBox(height: spacing.medium),
-        Text(
-          'Surfaces filter what is behind them instead of covering it. Focus '
-          'is a lit edge rather than a ripple. Pushing a list past its end '
-          'lights the edge instead of stretching it.',
-          style: type.bodySmall.copyWith(color: tokens.colors.outline),
-        ),
-        SizedBox(height: spacing.extraLarge),
+    // Pull the page down past the top: the edge lights, holds and breathes
+    // while the work runs, and nothing on the page moves.
+    return GlimmerRefreshIndicator(
+      onRefresh: () async {
+        await Future<void>.delayed(const Duration(milliseconds: 1400));
+        if (mounted) setState(() => _refreshed = true);
+      },
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(spacing.large, 24, spacing.large, 24),
+        children: [
+          Text('An interface\nwith atmosphere.', style: type.titleLarge),
+          SizedBox(height: spacing.medium),
+          Text(
+            _refreshed
+                ? 'Refreshed. Surfaces filter what is behind them instead of '
+                    'covering it, and pulling this page lit the edge instead of '
+                    'sliding a spinner over it.'
+                : 'Surfaces filter what is behind them instead of covering it. '
+                    'Focus is a lit edge rather than a ripple. Pull this page '
+                    'down past the top and the edge lights instead of stretching.',
+            style: type.bodySmall.copyWith(color: tokens.colors.outline),
+          ),
+          SizedBox(height: spacing.extraLarge),
 
-        // Surfaces over something busy, which is where glass is actually
-        // visible.
-        const _SectionLabel('Glass'),
-        SizedBox(height: spacing.medium),
-        ClipRRect(
-          borderRadius: tokens.shapes.medium,
-          child: Stack(
-            children: [
-              const _Backdrop(),
-              Padding(
-                padding: EdgeInsets.all(spacing.large),
-                child: Column(
-                  children: [
-                    const GlimmerTitleChip(
-                      'Museu do Café',
-                      leadingIcon: Icons.place_outlined,
-                    ),
-                    SizedBox(
-                      height: GlimmerTitleChipDefaults.associatedContentSpacing(
-                          context),
-                    ),
-                    const GlimmerCard(
-                      title: 'Arrive 10:08',
-                      supportingText: 'Six minutes on foot, mostly shade',
-                      leadingIcon: Icons.directions_walk,
-                    ),
-                    SizedBox(height: spacing.medium),
-                    // No tint at all: the surface adds nothing and only blurs
-                    // what is behind it, so all there is to see is the backdrop
-                    // out of focus and the lit edge around it.
-                    const GlimmerCard(
-                      opacity: 0,
-                      blur: 22,
-                      title: 'Santos, 24 degrees',
-                      supportingText: 'Clear sun all day',
-                      leadingIcon: Icons.wb_sunny_outlined,
-                    ),
-                  ],
+          // Surfaces over something busy, which is where glass is actually
+          // visible.
+          const _SectionLabel('Glass'),
+          SizedBox(height: spacing.medium),
+          ClipRRect(
+            borderRadius: tokens.shapes.medium,
+            child: Stack(
+              children: [
+                const _Backdrop(),
+                Padding(
+                  padding: EdgeInsets.all(spacing.large),
+                  child: Column(
+                    children: [
+                      const GlimmerTitleChip(
+                        'Museu do Café',
+                        leadingIcon: Icons.place_outlined,
+                      ),
+                      SizedBox(
+                        height:
+                            GlimmerTitleChipDefaults.associatedContentSpacing(
+                                context),
+                      ),
+                      const GlimmerCard(
+                        title: 'Arrive 10:08',
+                        supportingText: 'Six minutes on foot, mostly shade',
+                        leadingIcon: Icons.directions_walk,
+                      ),
+                      SizedBox(height: spacing.medium),
+                      // No tint at all: the surface adds nothing and only blurs
+                      // what is behind it, so all there is to see is the backdrop
+                      // out of focus and the lit edge around it.
+                      const GlimmerCard(
+                        opacity: 0,
+                        blur: 22,
+                        title: 'Santos, 24 degrees',
+                        supportingText: 'Clear sun all day',
+                        leadingIcon: Icons.wb_sunny_outlined,
+                      ),
+                    ],
+                  ),
                 ),
+              ],
+            ),
+          ),
+          SizedBox(height: spacing.extraLarge),
+
+          const _SectionLabel('Card and actions'),
+          SizedBox(height: spacing.medium),
+          GlimmerCard(
+            focused: _saved,
+            onTap: () => setState(() => _saved = !_saved),
+            title: 'Jabuticaba',
+            supportingText: 'Paulista street market, R\$18 a kilo',
+            leadingIcon: Icons.local_grocery_store_outlined,
+          ),
+          SizedBox(height: spacing.medium),
+          GlimmerButtonGroup(
+            children: [
+              GlimmerButton(
+                label: _saved ? 'Saved' : 'Save',
+                leadingIcon: _saved ? Icons.check : Icons.bookmark_add_outlined,
+                prominent: true,
+                onPressed: () => setState(() => _saved = !_saved),
+              ),
+              GlimmerButton(
+                label: 'Share',
+                leadingIcon: Icons.ios_share,
+                onPressed: () {},
               ),
             ],
           ),
-        ),
-        SizedBox(height: spacing.extraLarge),
+          SizedBox(height: spacing.extraLarge),
 
-        const _SectionLabel('Card and actions'),
-        SizedBox(height: spacing.medium),
-        GlimmerCard(
-          focused: _saved,
-          onTap: () => setState(() => _saved = !_saved),
-          title: 'Jabuticaba',
-          supportingText: 'Paulista street market, R\$18 a kilo',
-          leadingIcon: Icons.local_grocery_store_outlined,
-        ),
-        SizedBox(height: spacing.medium),
-        GlimmerButtonGroup(
-          children: [
-            GlimmerButton(
-              label: _saved ? 'Saved' : 'Save',
-              leadingIcon: _saved ? Icons.check : Icons.bookmark_add_outlined,
-              prominent: true,
-              onPressed: () => setState(() => _saved = !_saved),
-            ),
-            GlimmerButton(
-              label: 'Share',
-              leadingIcon: Icons.ios_share,
-              onPressed: () {},
-            ),
-          ],
-        ),
-        SizedBox(height: spacing.extraLarge),
-
-        const _SectionLabel('Stack'),
-        SizedBox(height: spacing.small),
-        Text(
-          'One item at a time. Swipe up and down.',
-          style: type.caption.copyWith(color: tokens.colors.outline),
-        ),
-        SizedBox(height: spacing.medium),
-        GlimmerStack(
-          onIndexChanged: (index) => setState(() => _stackIndex = index),
-          children: const [
-            GlimmerCard(
-              title: 'Rafa',
-              supportingText: 'Anything from the bakery? I am in the queue.',
-              leadingIcon: Icons.chat_bubble_outline,
-            ),
-            GlimmerCard(
-              title: 'Tropicália',
-              supportingText: 'Now playing, 3 minutes 23 left',
-              leadingIcon: Icons.music_note_outlined,
-            ),
-            GlimmerCard(
-              title: 'Saturday market',
-              supportingText: 'Jabuticaba, papaya, kale, pão de queijo',
-              leadingIcon: Icons.checklist,
-            ),
-          ],
-        ),
-        SizedBox(height: spacing.medium),
-        Center(
-          child: Text(
-            '${_stackIndex + 1} of 3',
+          const _SectionLabel('Stack'),
+          SizedBox(height: spacing.small),
+          Text(
+            'One item at a time. Swipe up and down.',
             style: type.caption.copyWith(color: tokens.colors.outline),
           ),
-        ),
-      ],
+          SizedBox(height: spacing.medium),
+          GlimmerStack(
+            onIndexChanged: (index) => setState(() => _stackIndex = index),
+            children: const [
+              GlimmerCard(
+                title: 'Rafa',
+                supportingText: 'Anything from the bakery? I am in the queue.',
+                leadingIcon: Icons.chat_bubble_outline,
+              ),
+              GlimmerCard(
+                title: 'Tropicália',
+                supportingText: 'Now playing, 3 minutes 23 left',
+                leadingIcon: Icons.music_note_outlined,
+              ),
+              GlimmerCard(
+                title: 'Saturday market',
+                supportingText: 'Jabuticaba, papaya, kale, pão de queijo',
+                leadingIcon: Icons.checklist,
+              ),
+            ],
+          ),
+          SizedBox(height: spacing.medium),
+          Center(
+            child: Text(
+              '${_stackIndex + 1} of 3',
+              style: type.caption.copyWith(color: tokens.colors.outline),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -467,6 +482,23 @@ class _ComponentsPageState extends State<_ComponentsPage> {
           ],
         ),
         SizedBox(height: spacing.extraLarge),
+        const _SectionLabel('Screens'),
+        SizedBox(height: spacing.small),
+        Text(
+          'A pushed screen arrives instead of sliding, and the one behind it '
+          'withdraws rather than moving away.',
+          style:
+              tokens.typography.caption.copyWith(color: tokens.colors.outline),
+        ),
+        SizedBox(height: spacing.medium),
+        GlimmerButton(
+          label: 'Open a screen',
+          leadingIcon: Icons.open_in_new,
+          onPressed: () => Navigator.of(context).push(
+            GlimmerPageRoute<void>(builder: (context) => const _DetailScreen()),
+          ),
+        ),
+        SizedBox(height: spacing.extraLarge),
         const _SectionLabel('Overlays'),
         SizedBox(height: spacing.small),
         Text(
@@ -667,6 +699,50 @@ class _FoundationsPage extends StatelessWidget {
           SizedBox(height: spacing.small),
         ],
       ],
+    );
+  }
+}
+
+/// The screen [GlimmerPageRoute] pushes, so the arrival has something to
+/// arrive with.
+class _DetailScreen extends StatelessWidget {
+  const _DetailScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = GlimmerTheme.of(context);
+    final spacing = tokens.spacing;
+
+    return GlimmerScaffold(
+      backdrop: const GlimmerBackdrop(),
+      title: 'Museu do Café',
+      leading: GlimmerIconButton(
+        icon: Icons.arrow_back,
+        tooltip: 'Back',
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      body: ListView(
+        padding: EdgeInsets.fromLTRB(spacing.large, 24, spacing.large, 24),
+        children: [
+          const GlimmerCard(
+            leadingIcon: Icons.museum_outlined,
+            title: 'Santos, open until five',
+            supportingText: 'The old coffee exchange, kept as it was.',
+          ),
+          SizedBox(height: spacing.medium),
+          const GlimmerCard(
+            leadingIcon: Icons.directions_walk,
+            title: 'Arrive 10:08',
+            supportingText: 'Six minutes on foot, mostly shade',
+          ),
+          SizedBox(height: spacing.medium),
+          GlimmerButton(
+            label: 'Back',
+            expand: true,
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
     );
   }
 }

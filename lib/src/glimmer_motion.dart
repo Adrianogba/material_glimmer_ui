@@ -75,6 +75,12 @@ class GlimmerMotion {
   /// cannot.
   static const modalDuration = Duration(milliseconds: 260);
 
+  /// How long a page takes to arrive or leave.
+  ///
+  /// Longer than a modal, because a whole screen is changing rather than one
+  /// panel appearing over it, and still nowhere near the focus transition.
+  static const pageDuration = Duration(milliseconds: 340);
+
   /// The alpha of the veil drawn over the app behind a modal surface.
   ///
   /// The same value [GlimmerStack] recedes an item behind by, which is the same

@@ -39,6 +39,16 @@ First release.
   opens from the middle outward with the bloom brightest where the push lands.
   Moving the content would render the scrollable into an offscreen layer, and
   every glass surface inside it would lose its backdrop.
+- `GlimmerRefreshIndicator`, pull to refresh without moving anything. The same
+  edge light brightens with the pull, then holds and breathes on the ambient
+  envelope while the work runs, instead of sliding a spinner over the list or
+  opening a gap above it.
+- `GlimmerPageRoute`, a page that arrives instead of sliding. A slide or a fade
+  puts the incoming page in its own layer, which takes the backdrop away from
+  every glass surface on it for the length of the transition. This one moves
+  nothing: the page comes in through `GlimmerEntrance` and the one behind it
+  withdraws by its depth level. `GlimmerScaffold` fades its own ground with the
+  entrance so a page does not cut its background in on the first frame.
 - `GlimmerTone`, the perceptual lightness maths the colours are stated in, so a
   re-skinned palette derives its focused fill and border correctly.
 - `GlimmerScale`, choosing between the phone measurements and a set half again

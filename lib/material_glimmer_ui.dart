@@ -52,6 +52,7 @@ export 'src/glimmer_metrics.dart';
 export 'src/glimmer_modal.dart';
 export 'src/glimmer_motion.dart';
 export 'src/glimmer_overscroll.dart';
+export 'src/glimmer_page_route.dart';
 export 'src/glimmer_pager.dart';
 export 'src/glimmer_scroll.dart';
 export 'src/glimmer_shell.dart';

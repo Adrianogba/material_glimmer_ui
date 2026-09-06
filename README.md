@@ -145,6 +145,30 @@ else settles with.
 `MaterialGlimmerApp` installs it through `GlimmerScrollBehavior`. Pass your own
 `scrollBehavior` to opt out.
 
+`GlimmerRefreshIndicator` is the same light doing more work. Pull past the top
+and the edge brightens with the pull; let go past the trigger and it holds and
+breathes on the ambient envelope until the refresh finishes. No spinner slides
+over the list and no gap opens above it.
+
+## Screens
+
+`GlimmerPageRoute` pushes a page without moving it. `MaterialPageRoute` slides
+the incoming page and `CupertinoPageRoute` pushes it in from the side; both put
+it in a layer of its own on the way, which takes the backdrop away from every
+glass surface on it, so a pushed screen goes flat for the whole transition and
+snaps back at the end.
+
+Here the arriving page comes in through `GlimmerEntrance`: its ground fades up
+and its surfaces build their own tint, blur and edge as they land. The page
+being covered withdraws by its depth level rather than sliding away, the same
+thing a modal does to the app behind it.
+
+```dart
+Navigator.of(context).push(
+  GlimmerPageRoute(builder: (context) => const DetailScreen()),
+);
+```
+
 ## Components
 
 **App and structure.**
@@ -164,7 +188,7 @@ else settles with.
 
 **Collections.**
 `GlimmerList` · `GlimmerListItem` · `GlimmerStack` · `GlimmerPager` ·
-`GlimmerPageIndicator` · `GlimmerScrim`
+`GlimmerPageIndicator` · `GlimmerScrim` · `GlimmerRefreshIndicator`
 
 **Input.**
 `GlimmerTextField` · `GlimmerSwitch` · `GlimmerSlider` · `GlimmerProgressBar`
@@ -179,7 +203,7 @@ else settles with.
 `GlimmerShapes` · `GlimmerSpacing` · `GlimmerIconSizes` · `GlimmerDepth` ·
 `GlimmerMotion` · `GlimmerEdge` · `GlimmerEdgeBlur` · `GlimmerTone` ·
 `GlimmerEntrance` · `GlimmerScrollBehavior` · `GlimmerOverscrollIndicator` ·
-`GlimmerScale`
+`GlimmerPageRoute` · `GlimmerScale`
 
 ## Two scales
 

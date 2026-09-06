@@ -1,3 +1,4 @@
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -260,7 +261,6 @@ void main() {
       expect(find.text('custom'), findsOneWidget);
       expect(find.text('ignored'), findsNothing);
     });
-
   });
 
   group('GlimmerListItem and GlimmerList', () {
@@ -890,7 +890,6 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Leave the queue?'), findsNothing);
     });
-
 
     // Glimmer's depth is the plane behind withdrawing, not a shadow around the
     // thing in front. Nothing paints one, so a modal spends its level on the
@@ -1872,6 +1871,232 @@ void main() {
         '42%',
       );
       handle.dispose();
+    });
+  });
+
+  group('refresh', () {
+    Widget host(Future<void> Function() onRefresh) => MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: GlimmerRefreshIndicator(
+              onRefresh: onRefresh,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: const [SizedBox(height: 200, child: Text('rows'))],
+              ),
+            ),
+          ),
+        );
+
+    testWidgets('a pull past the trigger runs the refresh', (tester) async {
+      var runs = 0;
+      final completer = Completer<void>();
+      await tester.pumpWidget(host(() {
+        runs++;
+        return completer.future;
+      }));
+
+      final gesture = await tester.startGesture(const Offset(400, 200));
+      await gesture.moveBy(const Offset(0, 300));
+      await tester.pump();
+      expect(runs, 0, reason: 'the pull should not fire until it is let go');
+
+      await gesture.up();
+      await tester.pump();
+      expect(runs, 1);
+
+      completer.complete();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('a short pull does not', (tester) async {
+      var runs = 0;
+      await tester.pumpWidget(host(() async => runs++));
+
+      final gesture = await tester.startGesture(const Offset(400, 200));
+      await gesture.moveBy(const Offset(0, 30));
+      await tester.pump();
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      expect(runs, 0);
+    });
+
+    // The bloom is masked with BlendMode.dstIn. On the bare canvas that takes
+    // the alpha out of everything already painted under it rather than out of
+    // the bloom, which puts a black band across the top of the page. Nothing
+    // structural catches that, so this looks at the pixels.
+    testWidgets('the bloom does not erase the content under it',
+        (tester) async {
+      const ground = Color(0xFF808080);
+      final key = GlobalKey();
+      final completer = Completer<void>();
+
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: RepaintBoundary(
+              key: key,
+              child: GlimmerRefreshIndicator(
+                onRefresh: () => completer.future,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.zero,
+                  children: const [
+                    SizedBox(height: 400, child: ColoredBox(color: ground)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      Future<int> luminanceNearTheTop() async {
+        late int value;
+        await tester.runAsync(() async {
+          final boundary =
+              key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+          final image = await boundary.toImage();
+          final pixels = (await image.toByteData())!;
+          final width = tester.getSize(find.byKey(key)).width.toInt();
+          // Inside the bloom and off to one side. The mask that shapes it is
+          // opaque at the centre and falls away toward the ends, so the centre
+          // is exactly where the bug does not show.
+          final offset = ((20 * width) + (width ~/ 4)) * 4;
+          value = pixels.getUint8(offset) +
+              pixels.getUint8(offset + 1) +
+              pixels.getUint8(offset + 2);
+        });
+        return value;
+      }
+
+      final resting = await luminanceNearTheTop();
+
+      final gesture = await tester.startGesture(const Offset(400, 200));
+      await gesture.moveBy(const Offset(0, 200));
+      await tester.pump();
+
+      final pulled = await luminanceNearTheTop();
+
+      // The bloom only adds light, so the ground under it can brighten and
+      // must never darken.
+      expect(
+        pulled,
+        greaterThanOrEqualTo(resting),
+        reason: 'the bloom is taking the content out from under itself',
+      );
+
+      await gesture.up();
+      await tester.pump();
+      completer.complete();
+      await tester.pumpAndSettle();
+    });
+
+    // Material slides a card down over the list and Cupertino opens a gap
+    // above it. Both move something; the edge lights instead.
+    testWidgets('the content does not move', (tester) async {
+      final completer = Completer<void>();
+      await tester.pumpWidget(host(() => completer.future));
+
+      final before = tester.getTopLeft(find.text('rows'));
+      final gesture = await tester.startGesture(const Offset(400, 200));
+      await gesture.moveBy(const Offset(0, 300));
+      await tester.pump();
+      expect(tester.getTopLeft(find.text('rows')), before);
+
+      await gesture.up();
+      await tester.pump();
+      expect(tester.getTopLeft(find.text('rows')), before);
+
+      completer.complete();
+      await tester.pumpAndSettle();
+    });
+  });
+
+  group('page route', () {
+    testWidgets('a pushed page arrives without being put in a layer',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: Builder(
+              builder: (context) => GlimmerButton(
+                label: 'Push',
+                onPressed: () => Navigator.of(context).push(
+                  GlimmerPageRoute<void>(
+                    builder: (context) => const GlimmerScaffold(
+                      body: GlimmerCard(title: 'Detail'),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Push'));
+      await tester.pump();
+      // Part way in, which is where a slide or a fade would show.
+      await tester.pump(const Duration(milliseconds: 150));
+
+      expect(find.text('Detail'), findsOneWidget);
+      for (final type in [FadeTransition, SlideTransition]) {
+        expect(
+          find.ancestor(
+            of: find.text('Detail'),
+            matching: find.byWidgetPredicate((w) => w.runtimeType == type),
+          ),
+          findsNothing,
+          reason: 'the arriving page is wrapped in a $type',
+        );
+      }
+      expect(
+        find.ancestor(
+          of: find.text('Detail'),
+          matching: find.byType(GlimmerEntrance),
+        ),
+        findsWidgets,
+      );
+
+      // The page does not move, so it is already where it will end up.
+      final midway = tester.getTopLeft(find.byType(GlimmerCard));
+      await tester.pumpAndSettle();
+      expect(tester.getTopLeft(find.byType(GlimmerCard)), midway);
+    });
+
+    testWidgets('the page underneath withdraws rather than sliding away',
+        (tester) async {
+      late BuildContext pageContext;
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: Builder(
+              builder: (context) {
+                pageContext = context;
+                return const GlimmerCard(title: 'Home');
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final before = tester.getTopLeft(find.byType(GlimmerCard));
+
+      Navigator.of(pageContext).push(
+        GlimmerPageRoute<void>(
+          builder: (context) => const GlimmerScaffold(body: Text('Detail')),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 150));
+
+      expect(tester.getTopLeft(find.byType(GlimmerCard)), before);
+
+      final tokens = GlimmerTokens.forScale(GlimmerScale.mobile);
+      expect(tokens.depth.level3.recede, greaterThan(0));
     });
   });
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'glimmer_entrance.dart';
 import 'glimmer_surface.dart';
 import 'glimmer_theme.dart';
 
@@ -63,12 +64,19 @@ class GlimmerScaffold extends StatelessWidget {
     final tokens = GlimmerTheme.of(context);
     final colors = tokens.colors;
 
+    // A scaffold fades its own ground with the entrance, so a page arriving
+    // through GlimmerPageRoute builds up from the screen behind it rather than
+    // cutting its background in on the first frame. This is the ground itself,
+    // not a layer over the page, so the glass on top still reads its backdrop.
+    final entrance = GlimmerEntrance.of(context);
+    final ground = backgroundColor ?? colors.background;
+
     // Flutter's ambient text style is only defined inside a Material. Without
     // one, any Text in the body renders in the red monospace error style, so
     // the scaffold has to establish the same context Material's own does.
     return Material(
       type: MaterialType.canvas,
-      color: backgroundColor ?? colors.background,
+      color: ground.withValues(alpha: ground.a * entrance),
       child: DefaultTextStyle(
         style: tokens.typography.bodySmall.copyWith(color: colors.onSurface),
         child: IconTheme(
@@ -78,7 +86,14 @@ class GlimmerScaffold extends StatelessWidget {
           ),
           child: Stack(
             children: [
-              if (backdrop != null) Positioned.fill(child: backdrop!),
+              if (backdrop != null)
+                Positioned.fill(
+                  // An Opacity here is a sibling of the glass rather than an
+                  // ancestor, so it costs the surfaces above nothing.
+                  child: entrance >= 1
+                      ? backdrop!
+                      : Opacity(opacity: entrance, child: backdrop!),
+                ),
               SafeArea(
                 child: Column(
                   children: [
