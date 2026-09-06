@@ -543,6 +543,15 @@ class _ComponentsPageState extends State<_ComponentsPage> {
           semanticLabel: 'Progress',
           onChanged: (value) => setState(() => _progress = value),
         ),
+        SizedBox(height: spacing.large),
+        Text(
+          'With no value, a highlight travels the track instead of a block '
+          'sliding along it.',
+          style:
+              tokens.typography.caption.copyWith(color: tokens.colors.outline),
+        ),
+        SizedBox(height: spacing.medium),
+        const GlimmerProgressBar(),
       ],
     );
   }

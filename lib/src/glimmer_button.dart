@@ -134,7 +134,8 @@ class GlimmerButton extends StatelessWidget {
         color: fill,
         borderRadius: tokens.shapes.stadium,
         padding: size.padding(tokens),
-        semanticLabel: label,
+        // No semanticLabel here. The label is on screen, so the Text already
+        // carries it, and setting both makes a screen reader say it twice.
         child: ConstrainedBox(
           constraints: BoxConstraints(minHeight: size.minHeight - 16),
           child: Center(widthFactor: expand ? null : 1, child: row),

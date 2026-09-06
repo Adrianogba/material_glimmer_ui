@@ -317,10 +317,21 @@ class _GlimmerSurfaceState extends State<GlimmerSurface>
       button: enabled,
       selected: widget.focused,
       label: widget.semanticLabel,
-      child: Focus(
+      child: FocusableActionDetector(
+        enabled: enabled,
         focusNode: widget.focusNode,
         autofocus: widget.autofocus,
-        canRequestFocus: enabled,
+        // Enter and Space used to reach the surface through InkWell's own
+        // actions. Nothing else here listens for them, so the surface says so
+        // itself, which is what keyboard and switch users activate it with.
+        actions: {
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              widget.onTap?.call();
+              return null;
+            },
+          ),
+        },
         onFocusChange: (hasFocus) {
           if (_hasKeyboardFocus == hasFocus) return;
           setState(() => _hasKeyboardFocus = hasFocus);
@@ -407,23 +418,15 @@ class _GlimmerSurfaceState extends State<GlimmerSurface>
               child: child,
             );
           },
-          // The content colour has to be published inside the gesture wrapper,
-          // not around it. That wrapper contains a Material, and a Material
-          // installs its own DefaultTextStyle from the ambient theme. Setting
-          // the style outside it leaves icons on the surface's content colour
-          // and text on the theme's, which on a dark ground happen to look the
-          // same and on a light one give a white icon beside black text.
-          //
-          // The style replaces the ambient one rather than merging into it, the
-          // way Material's own Material does. Merging looks equivalent until a
-          // surface is used outside any Material, where the ambient style is
-          // Flutter's red monospace error style: a merge keeps its underline
-          // and its typeface and only changes the size and the colour.
+          // The style replaces the ambient one rather than merging into it,
+          // the way Material's own Material does. Merging looks equivalent
+          // until a surface is used outside any Material, where the ambient
+          // style is Flutter's red monospace error style: a merge keeps its
+          // underline and its typeface and only changes the size and colour.
           //
           // Glimmer's ambient text style is bodySmall and its ambient icon size
           // is medium. Components that want something else say so.
           child: _GlimmerSurfaceGesture(
-            radius: radius,
             onTap: widget.onTap,
             onLongPress: widget.onLongPress,
             onPressStart: enabled ? _handlePressStart : null,
@@ -456,10 +459,15 @@ class _GlimmerSurfaceState extends State<GlimmerSurface>
   }
 }
 
-/// Routes taps without drawing Material's ripple, hover or focus overlays.
+/// Routes taps and presses to the surface's own states.
+///
+/// An [InkWell] with every overlay turned off would do the same job, and used
+/// to. It also drags in Material's highlight, hover and focus machinery for
+/// effects that are all disabled, and needs a [Material] ancestor to exist at
+/// all, which meant every interactive surface planted one. This is the part
+/// that was actually being used.
 class _GlimmerSurfaceGesture extends StatelessWidget {
   const _GlimmerSurfaceGesture({
-    required this.radius,
     required this.child,
     this.onTap,
     this.onLongPress,
@@ -467,7 +475,6 @@ class _GlimmerSurfaceGesture extends StatelessWidget {
     this.onPressEnd,
   });
 
-  final BorderRadius radius;
   final Widget child;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
@@ -477,15 +484,10 @@ class _GlimmerSurfaceGesture extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (onTap == null && onLongPress == null) return child;
-    return Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        splashFactory: NoSplash.splashFactory,
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        hoverColor: Colors.transparent,
-        focusColor: Colors.transparent,
-        borderRadius: radius,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
         onLongPress: onLongPress,
         onTapDown: onPressStart == null ? null : (_) => onPressStart!(),

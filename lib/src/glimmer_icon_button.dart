@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'glimmer_surface.dart';
 import 'glimmer_theme.dart';
+import 'glimmer_tooltip.dart';
 
 /// A circular Glimmer button holding a single icon.
 ///
@@ -72,7 +73,9 @@ class GlimmerIconButton extends StatelessWidget {
       ),
     );
 
-    return tooltip == null ? button : Tooltip(message: tooltip!, child: button);
+    return tooltip == null
+        ? button
+        : GlimmerTooltip(message: tooltip!, child: button);
   }
 }
 

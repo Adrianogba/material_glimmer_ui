@@ -1,7 +1,7 @@
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_glimmer_ui/material_glimmer_ui.dart';
 
@@ -81,13 +81,46 @@ void main() {
       expect(longPresses, 1);
     });
 
-    testWidgets('draws no Material ink response', (tester) async {
+    // The press state is a flat overlay the surface paints itself. An InkWell
+    // with every overlay disabled did the same job for a while, and brought
+    // Material's highlight, hover and focus machinery plus a Material ancestor
+    // with it.
+    testWidgets('carries no Material ink machinery', (tester) async {
       await tester.pumpWidget(
         host(GlimmerSurface(onTap: () {}, child: const Text('x'))),
       );
-      final inkWell = tester.widget<InkWell>(find.byType(InkWell));
-      expect(inkWell.splashFactory, NoSplash.splashFactory);
-      expect(inkWell.highlightColor, Colors.transparent);
+      for (final type in [InkWell, InkResponse, Material]) {
+        expect(
+          find.descendant(
+            of: find.byType(GlimmerSurface),
+            matching: find.byWidgetPredicate((w) => w.runtimeType == type),
+          ),
+          findsNothing,
+          reason: 'a surface still contains a $type',
+        );
+      }
+    });
+
+    testWidgets('a keyboard can activate a surface', (tester) async {
+      var taps = 0;
+      await tester.pumpWidget(
+        host(
+          GlimmerSurface(
+            autofocus: true,
+            onTap: () => taps++,
+            child: const Text('x'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(taps, 1);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.space);
+      await tester.pumpAndSettle();
+      expect(taps, 2);
     });
 
     testWidgets('the ambient sweep does not run when it is off',
@@ -141,7 +174,10 @@ void main() {
       await tester.pumpWidget(
         host(const GlimmerButton(label: 'Reply', onPressed: null)),
       );
-      expect(find.byType(InkWell), findsNothing);
+      final surface = tester.widget<GlimmerSurface>(
+        find.byType(GlimmerSurface),
+      );
+      expect(surface.onTap, isNull);
       final opacity = tester.widget<AnimatedOpacity>(
         find.byType(AnimatedOpacity).first,
       );
@@ -1707,6 +1743,135 @@ void main() {
         ),
         GlimmerBottomSheet,
       );
+    });
+  });
+
+  group('tooltip', () {
+    testWidgets('a long press shows the label and it leaves on its own',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: Center(
+              child: GlimmerIconButton(
+                icon: Icons.mic,
+                tooltip: 'Voice input',
+                onPressed: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Voice input'), findsNothing);
+
+      await tester.longPress(find.byType(GlimmerIconButton));
+      // Not pumpAndSettle: the pill takes itself away after showDuration, and
+      // settling would run that timer out before anything could be checked.
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Voice input'), findsOneWidget);
+
+      // The pill is a surface like everything else, not a flat slab, and it is
+      // never Material's tooltip.
+      expect(
+        find.descendant(
+          of: find.byType(GlimmerTooltip),
+          matching: find.byType(Tooltip),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.ancestor(
+          of: find.text('Voice input'),
+          matching: find.byType(GlimmerSurface),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pumpAndSettle();
+      expect(find.text('Voice input'), findsNothing);
+    });
+
+    testWidgets('the label is announced without being on screen',
+        (tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: Center(
+              child: GlimmerIconButton(
+                icon: Icons.mic,
+                tooltip: 'Voice input',
+                onPressed: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getSemantics(find.byType(GlimmerIconButton)).tooltip,
+        'Voice input',
+      );
+      handle.dispose();
+    });
+  });
+
+  group('progress bar', () {
+    testWidgets('an indeterminate bar sweeps and a determinate one rests',
+        (tester) async {
+      await tester.pumpWidget(
+        const MaterialGlimmerApp(
+          home: GlimmerScaffold(body: GlimmerProgressBar()),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(tester.hasRunningAnimations, isTrue);
+
+      await tester.pumpWidget(
+        const MaterialGlimmerApp(
+          home: GlimmerScaffold(body: GlimmerProgressBar(value: 0.4)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.hasRunningAnimations, isFalse);
+    });
+
+    // Material slides a block along the track for indeterminate progress, and
+    // draws the determinate bar with its own indicator. Both are drawn here.
+    testWidgets('draws itself rather than borrowing an indicator',
+        (tester) async {
+      await tester.pumpWidget(
+        const MaterialGlimmerApp(
+          home: GlimmerScaffold(body: GlimmerProgressBar(value: 0.4)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(GlimmerProgressBar),
+          matching: find.byType(CustomPaint),
+        ),
+        findsWidgets,
+      );
+    });
+
+    testWidgets('reports its value to a screen reader', (tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(
+        const MaterialGlimmerApp(
+          home: GlimmerScaffold(body: GlimmerProgressBar(value: 0.42)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        tester.getSemantics(find.byType(GlimmerProgressBar)).value,
+        '42%',
+      );
+      handle.dispose();
     });
   });
 }

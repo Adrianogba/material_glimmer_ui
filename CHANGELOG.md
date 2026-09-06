@@ -52,8 +52,13 @@ First release.
   `GlimmerVoiceInputIndicator`, `GlimmerPager` and `GlimmerPageIndicator`.
 - Overlays: `showGlimmerDialog`, `showGlimmerBottomSheet`,
   `showGlimmerSnackbar` and `showGlimmerMenu`, over a `GlimmerModalScrim`.
+- `GlimmerTooltip`, a glass pill rather than a grey slab, kept clear of the
+  status bar and the screen edges. `GlimmerIconButton` uses it for `tooltip`.
+- `GlimmerProgressBar`, drawn rather than borrowed. The determinate bar is the
+  slider's lit track with a glow at the leading end; the indeterminate one
+  sends a tapered highlight along the track instead of sliding a block.
 - Input and structure: `GlimmerTextField`, `GlimmerSwitch`, `GlimmerSlider`,
-  `GlimmerProgressBar`, `GlimmerScaffold` and `GlimmerTopBar`.
+  `GlimmerScaffold` and `GlimmerTopBar`.
 - Additive surfaces, composited with `BlendMode.plus`, so a surface on dark adds
   light rather than blocking it. Turn it off with `additive: false`.
 - No assets and no dependencies beyond Flutter.

@@ -159,7 +159,7 @@ else settles with.
 `GlimmerIconButton` · `GlimmerIconToggleButton`
 
 **Content.**
-`GlimmerText` · `GlimmerIcon` · `GlimmerTitleChip` ·
+`GlimmerText` · `GlimmerIcon` · `GlimmerTitleChip` · `GlimmerTooltip` ·
 `GlimmerVoiceInputIndicator`
 
 **Collections.**
