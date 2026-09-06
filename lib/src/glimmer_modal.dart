@@ -14,9 +14,9 @@ import 'glimmer_theme.dart';
 /// This is where a Glimmer depth level is spent. Nothing is painted around the
 /// panel to say it is in front; the plane behind it stops being fully drawn
 /// instead, blurred and taken back toward the ground colour by
-/// [GlimmerDepthLevel.recede]. That is what the published black shadows do on
-/// hardware where black is transparent, said in a way that also works on an
-/// opaque screen and in a light theme, where a black wash is a bruise.
+/// [GlimmerDepthLevel.recede]. Nothing is drawn around the panel to say it is
+/// in front, and because the app falls back toward the ground colour rather
+/// than toward black it reads correctly on a light theme too.
 class GlimmerModalScrim extends StatelessWidget {
   /// Creates a modal scrim.
   const GlimmerModalScrim({
@@ -84,10 +84,8 @@ class GlimmerModalScrim extends StatelessWidget {
 /// Use [showGlimmerDialog] to put one on screen. Built directly, it is just the
 /// panel, which is useful when a route of your own already provides the scrim.
 ///
-/// Glimmer has no dialog. Display glasses show one thing at a time, so a panel
-/// interrupting another panel has nowhere to go. A phone app needs one, and the
-/// pieces to build it are all here: a surface over a
-/// blurred app is exactly what the design language says "this, not that" with.
+/// A surface over a blurred, withdrawn app is how this kit says "this, not
+/// that", so a dialog needs nothing that is not already here.
 class GlimmerDialog extends StatelessWidget {
   /// Creates a dialog panel.
   const GlimmerDialog({

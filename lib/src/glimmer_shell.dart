@@ -5,16 +5,13 @@ import 'glimmer_theme.dart';
 
 /// An app frame in the Glimmer language.
 ///
-/// Glimmer has no scaffold, no app bar and no navigation bar. A glasses app
-/// shows one thing at a time and is dismissed with the system back gesture, so
-/// there is nothing to navigate between and nothing to put a bar around. A
-/// phone app needs both, and Material's own bars carry elevation, tonal
-/// overlays and a ripple that fight the Glimmer surface treatment.
+/// Material's own bars carry elevation, tonal overlays and a ripple that fight
+/// the Glimmer surface treatment, so this is the familiar structure drawn with
+/// Glimmer's tokens instead: a bar, a body over a backdrop, and a navigation
+/// strip that is one surface rather than a row of them.
 ///
-/// So this is a mobile addition: Material's structure, drawn with Glimmer's
-/// tokens. Nothing upstream corresponds to it, and it is entirely optional. A
-/// plain [Scaffold] under [GlimmerTheme.dark] works too and inherits the
-/// palette and type.
+/// It is entirely optional. A plain [Scaffold] under [GlimmerTheme.dark] works
+/// too and inherits the palette and type.
 class GlimmerScaffold extends StatelessWidget {
   /// Creates a Glimmer app frame.
   const GlimmerScaffold({
@@ -117,7 +114,7 @@ class GlimmerScaffold extends StatelessWidget {
   }
 }
 
-/// The top bar used by [GlimmerScaffold]. A mobile addition.
+/// The top bar used by [GlimmerScaffold].
 class GlimmerTopBar extends StatelessWidget {
   /// Creates a Glimmer top bar.
   const GlimmerTopBar({

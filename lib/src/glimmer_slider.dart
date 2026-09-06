@@ -6,12 +6,11 @@ import 'glimmer_theme.dart';
 
 /// A value chosen along a track.
 ///
-/// Glimmer has no slider in its component list, but it does show one: the
-/// media scrubber on its navigation card is a thin track with a round thumb, so
-/// that is the shape this follows rather than Material's.
+/// A thin track with a round thumb, shaped after a media scrubber rather than
+/// after Material's slider.
 ///
-/// The differences from Material's slider are the same ones that run through
-/// the rest of this kit. There is no ripple and no value bubble. The thumb
+/// The differences from Material's are the same ones that run through the rest
+/// of this kit. There is no ripple and no value bubble. The thumb
 /// carries the surface states instead: a lit edge at rest, the focal colour and
 /// depth while it is held, and the white press overlay at 16%. Dragging uses
 /// the press springs, and letting go settles on the same spring a stack item

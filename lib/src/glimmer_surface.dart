@@ -18,11 +18,11 @@ import 'glimmer_tone.dart';
 /// A surface is glass. It does not paint a colour over the background, it
 /// filters the background: whatever sits behind it is blurred and then tinted,
 /// so the colour, the texture and the movement underneath still come through.
-/// That is what a display lens does physically, and it is why every Glimmer
-/// screen wants a [GlimmerBackdrop] rather than a flat fill.
+/// That is why every Glimmer screen wants a [GlimmerBackdrop] rather than a
+/// flat fill.
 ///
 /// The edge is lit rather than drawn. A single flat stroke reads as an outline
-/// around a box; Glimmer's border is brightest where it faces the light and
+/// around a box; this border is brightest where it faces the light and
 /// almost gone on the opposite side, which is what makes a panel read as a
 /// piece of glass catching a highlight.
 ///
@@ -31,18 +31,16 @@ import 'glimmer_tone.dart';
 ///  * **Resting.** A 1.5 px lit edge in [GlimmerColors.outline].
 ///  * **Focused.** Over 800 ms the edge grows to 2 px and turns the focal
 ///    colour and the tint brightens, so the surface reads as turning toward
-///    the light. Leaving focus takes 500 ms. Both use Compose's
-///    LinearOutSlowInEasing.
-///  * **Pressed.** A white overlay at 16%, sprung in and out with the source
-///    stiffness, held for at least 300 ms so a quick tap is still seen.
+///    the light. Leaving focus takes 500 ms.
+///  * **Pressed.** A white overlay at 16%, sprung in and out, held for at least
+///    300 ms so a quick tap is still seen.
 ///
-/// On glasses, focus follows the touchpad. On a phone there is no roving focus,
-/// so [focused] is driven by whatever selection your screen already has, and
-/// keyboard focus feeds into the same treatment for anyone using an external
-/// keyboard or a switch device.
+/// There is no roving focus, so [focused] is driven by whatever selection your
+/// screen already has. Keyboard focus feeds into the same treatment for anyone
+/// using an external keyboard or a switch device.
 ///
-/// Touch does not draw a Material ripple. Glimmer's press state is a flat
-/// overlay, and mixing the two reads as two systems arguing.
+/// Touch does not draw a ripple. The press state is a flat overlay, and mixing
+/// the two reads as two systems arguing.
 ///
 /// Nothing is painted around a surface to say how high it sits. Depth in
 /// Glimmer is not a shadow cast by the thing in front, it is the plane behind
@@ -90,16 +88,13 @@ class GlimmerSurface extends StatefulWidget {
   /// Called on long press.
   final VoidCallback? onLongPress;
 
-  /// Runs Glimmer's slow ambient sweep while the surface is focused.
+  /// Runs the slow ambient sweep while the surface is focused.
   ///
-  /// A bright highlight travels once around the lit edge, which is the moment
-  /// the design language is named after.
-  ///
-  /// It is off by default. On glasses the sweep marks the one element the
-  /// touchpad is pointing at; on a phone a permanently animating element costs
-  /// battery, competes with the content and is a problem for anyone who has
-  /// asked for reduced motion. Turn it on for a single hero element, not for
-  /// every row in a list.
+  /// A bright highlight travels once around the lit edge. It is the moment the
+  /// kit is named after, and it is off by default: a permanently animating
+  /// element costs battery, competes with the content and is a problem for
+  /// anyone who has asked for reduced motion. Turn it on for a single hero
+  /// element, not for every row in a list.
   final bool enableAmbientPulse;
 
   /// The resting tint. Defaults to [GlimmerColors.surface].

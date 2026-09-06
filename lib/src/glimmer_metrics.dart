@@ -4,9 +4,9 @@ import 'package:flutter/widgets.dart';
 
 /// Corner radii for the three Glimmer shape roles.
 ///
-/// Glimmer is a very round system: its standard surface radius is 36 dp and its
-/// buttons and chips are fully stadium-shaped. [GlimmerShapes.mobile] keeps that
-/// character at two thirds the radius so the corners do not eat a phone-sized
+/// A very round system: buttons and chips are fully stadium-shaped, and the
+/// standard surface radius is 36 dp at the large scale. [GlimmerShapes.mobile]
+/// keeps that character at a radius that does not eat a phone-sized
 /// component.
 @immutable
 class GlimmerShapes {
@@ -17,10 +17,10 @@ class GlimmerShapes {
     required this.stadium,
   });
 
-  /// The published Glimmer radii: 12 dp small, 36 dp medium.
+  /// The large radii: 12 dp small, 36 dp medium.
   factory GlimmerShapes.glasses() => GlimmerShapes._scaled(1);
 
-  /// The glasses radii at two thirds: 8 dp small, 24 dp medium.
+  /// The phone radii: 8 dp small, 24 dp medium.
   factory GlimmerShapes.mobile() => GlimmerShapes._scaled(2 / 3);
 
   factory GlimmerShapes._scaled(double scale) => GlimmerShapes(
@@ -50,8 +50,8 @@ class GlimmerShapes {
 
 /// The five Glimmer spacing steps.
 ///
-/// These are the published values, unscaled. They are already phone-sized, and
-/// scaling them would break touch targets rather than help them.
+/// The same at both scales. They are already phone-sized, and scaling them
+/// would break touch targets rather than help them.
 @immutable
 class GlimmerSpacing {
   /// Creates a spacing scale with every step given explicitly.
@@ -63,7 +63,7 @@ class GlimmerSpacing {
     required this.extraLarge,
   });
 
-  /// The published Glimmer spacing scale: 6, 8, 12, 16 and 20.
+  /// The spacing scale: 6, 8, 12, 16 and 20.
   const GlimmerSpacing.standard()
       : extraSmall = 6,
         small = 8,
@@ -100,8 +100,9 @@ class GlimmerSpacing {
 
 /// The three Glimmer icon sizes.
 ///
-/// Glimmer's 32, 40 and 48 are sized for a lens. [GlimmerIconSizes.mobile]
-/// scales them so an icon still sits correctly inside a phone-sized button.
+/// [GlimmerIconSizes.glasses] is sized for a display close to the eye.
+/// [GlimmerIconSizes.mobile] scales it down so an icon still sits correctly
+/// inside a phone-sized button.
 @immutable
 class GlimmerIconSizes {
   /// Creates an icon size set with every size given explicitly.
@@ -111,13 +112,13 @@ class GlimmerIconSizes {
     required this.large,
   });
 
-  /// The published Glimmer icon sizes: 32, 40 and 48.
+  /// The large icon sizes: 32, 40 and 48.
   const GlimmerIconSizes.glasses()
       : small = 32,
         medium = 40,
         large = 48;
 
-  /// The glasses sizes at two thirds: 21.3, 26.7 and 32.
+  /// The phone icon sizes: 21.3, 26.7 and 32.
   const GlimmerIconSizes.mobile()
       : small = 32 * 2 / 3,
         medium = 40 * 2 / 3,

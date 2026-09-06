@@ -9,58 +9,51 @@ First release.
 
 ### Added
 
-- `MaterialGlimmerApp` and `MaterialGlimmerApp.router`, the application widget, alongside
-  `MaterialApp` and `CupertinoApp`.
-- `GlimmerTheme.light()`, a light ground for a system Glimmer does not have,
-  and `themeMode` on `MaterialGlimmerApp` so both are always built.
-- `GlimmerBackdrop`, what surfaces are glass over, wired into
-  `GlimmerScaffold` through its `backdrop` slot.
-- `GlimmerPager` and `GlimmerPageIndicator`, with the published scale, blur and
-  fade falloffs, the edge scrim and the stretching dot indicator. A page at rest
-  is placed with no layer at all, so glass inside it keeps its backdrop.
-- `GlimmerScrollBehavior`, installed by `MaterialGlimmerApp`. Android's overscroll
-  stretch renders the scrolling content into an offscreen layer, which leaves a
-  surface reading its backdrop with nothing to read, so every glass panel went
-  flat for the length of the stretch.
+- `MaterialGlimmerApp` and `MaterialGlimmerApp.router`, the application widget,
+  alongside `MaterialApp` and `CupertinoApp`.
+- `GlimmerTheme.dark()` and `GlimmerTheme.light()`, each a complete `ThemeData`
+  with every token in a `ThemeExtension` and the `ColorScheme` and `TextTheme`
+  derived from it. `MaterialGlimmerApp` builds both always, so
+  `themeMode: ThemeMode.system` works with no other change.
+- `GlimmerSurface`, the glass pane everything else is built from. It blurs and
+  tints what is painted behind it, lights its edge on focus, and takes a flat
+  press overlay rather than a ripple.
+- `GlimmerEdge` and `GlimmerEdgeBlur`, the four-corner angular border gradient
+  and its progressive blur, as a sampled sweep gradient so it works on every
+  platform Flutter runs on.
+- `GlimmerBackdrop`, what surfaces are glass over, wired into `GlimmerScaffold`
+  through its `backdrop` slot. A theme-coloured gradient by default; takes an
+  image, your own colours, or any widget including live content.
+- `GlimmerDepth`, five levels expressed as how far the plane behind withdraws
+  rather than as a shadow in front. Nothing is drawn around a surface. The level
+  is spent by whatever owns both planes: `GlimmerStack` for a stack,
+  `GlimmerModalScrim` for a modal, where the app behind is blurred and taken
+  back toward the ground colour rather than washed with black, so it reads
+  correctly on a light theme too.
 - `GlimmerEntrance`, how a glass surface arrives. Glass cannot be faded: an
   opacity layer takes away the backdrop it reads for the whole animation and
   hands it back in one frame at the end. Every surface below scales its own
-  tint, blur and edge instead, so a menu or a dialog comes in without the jump.
-- `GlimmerEdge` and `GlimmerEdgeBlur`, the four-corner angular border gradient
-  and its progressive blur, reimplemented from the published AGSL shader as a
-  sweep gradient so it works on every platform rather than Android 13 and up.
-- `GlimmerTone`, the perceptual lightness maths Glimmer states its surface and
-  border colours in, so a re-skinned palette derives them correctly.
-- `GlimmerTheme.dark()`, returning a complete `ThemeData` with every Glimmer
-  token in a `ThemeExtension` and with the `ColorScheme` and `TextTheme` derived
-  from them.
+  tint, blur and edge instead.
+- `GlimmerOverscrollIndicator`, installed by `GlimmerScrollBehavior`. Neither a
+  stretch nor a bounce: the content does not move, and the edge it ran into
+  opens from the middle outward with the bloom brightest where the push lands.
+  Moving the content would render the scrollable into an offscreen layer, and
+  every glass surface inside it would lose its backdrop.
+- `GlimmerTone`, the perceptual lightness maths the colours are stated in, so a
+  re-skinned palette derives its focused fill and border correctly.
+- `GlimmerScale`, choosing between the phone measurements and a set half again
+  as large for a display held closer to the eye.
 - Tokens: `GlimmerColors`, `GlimmerTypography`, `GlimmerShapes`,
   `GlimmerSpacing`, `GlimmerIconSizes`, `GlimmerDepth` and `GlimmerMotion`.
-- `GlimmerDepth` as a withdrawal rather than a shadow. Glimmer's five levels are
-  black shadows, which is depth on a display where black is transparent: the
-  shadow is a hole, not a halo. Painted on an opaque phone screen they are a
-  dark halo, which is Material's language, so nothing is drawn around a surface
-  here. A level says how far the plane behind it withdraws, spaced by the
-  published spreads, and it is spent by whatever owns both planes.
-- `GlimmerScale`, choosing between the reduced mobile measurements and the
-  published glasses numbers.
-- Components: `GlimmerSurface`, `GlimmerCard`, `GlimmerButton`,
-  `GlimmerToggleButton`, `GlimmerButtonGroup`, `GlimmerIconButton`,
-  `GlimmerIconToggleButton`, `GlimmerText`, `GlimmerIcon`, `GlimmerTitleChip`,
-  `GlimmerList`, `GlimmerListItem`, `GlimmerStack`, `GlimmerScrim` and
-  `GlimmerVoiceInputIndicator`.
-- `GlimmerOverscrollIndicator`, installed by `GlimmerScrollBehavior`. Neither
-  Material's stretch nor Cupertino's bounce: the content does not move, and the
-  edge it ran into opens from the middle outward with the bloom brightest where
-  the push lands.
-- `GlimmerSlider`, shaped after the media scrubber Glimmer shows rather than
-  after Material's slider, with the surface states on the thumb and no ripple.
-- Overlays, none of which exist in Glimmer: `showGlimmerDialog`,
-  `showGlimmerBottomSheet`, `showGlimmerSnackbar` and `showGlimmerMenu`, over a
-  `GlimmerModalScrim` that blurs the app behind and withdraws it toward the
-  ground colour by the modal's depth level.
-- Other mobile additions that do not exist in Glimmer: `GlimmerTextField`,
-  `GlimmerSwitch`, `GlimmerProgressBar`, `GlimmerScaffold` and `GlimmerTopBar`.
-- Additive surfaces, composited with `BlendMode.plus` to reproduce the way a
-  lens display adds light instead of blocking it.
+- Components: `GlimmerCard`, `GlimmerButton`, `GlimmerToggleButton`,
+  `GlimmerButtonGroup`, `GlimmerIconButton`, `GlimmerIconToggleButton`,
+  `GlimmerText`, `GlimmerIcon`, `GlimmerTitleChip`, `GlimmerList`,
+  `GlimmerListItem`, `GlimmerStack`, `GlimmerScrim`,
+  `GlimmerVoiceInputIndicator`, `GlimmerPager` and `GlimmerPageIndicator`.
+- Overlays: `showGlimmerDialog`, `showGlimmerBottomSheet`,
+  `showGlimmerSnackbar` and `showGlimmerMenu`, over a `GlimmerModalScrim`.
+- Input and structure: `GlimmerTextField`, `GlimmerSwitch`, `GlimmerSlider`,
+  `GlimmerProgressBar`, `GlimmerScaffold` and `GlimmerTopBar`.
+- Additive surfaces, composited with `BlendMode.plus`, so a surface on dark adds
+  light rather than blocking it. Turn it off with `additive: false`.
 - No assets and no dependencies beyond Flutter.

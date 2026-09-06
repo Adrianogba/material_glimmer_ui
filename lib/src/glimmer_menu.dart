@@ -39,10 +39,9 @@ class GlimmerMenuItem<T> {
 /// Use [showGlimmerMenu], which positions it against a widget for you. Built
 /// directly it is just the panel.
 ///
-/// Glimmer has no menu, and on glasses it would be the wrong shape: a list
-/// floating beside something else is two things at once. On a phone it is
-/// ordinary, and the pieces already exist, so a menu here is a panel of rows
-/// with the same focus treatment a list item has.
+/// A panel of rows with the same focus treatment a list item has. The rows
+/// carry no fill and no blur of their own: glass over glass compounds, and the
+/// panel behind them would disappear under a stack of lighter bars.
 class GlimmerMenu<T> extends StatelessWidget {
   /// Creates a menu panel.
   const GlimmerMenu({

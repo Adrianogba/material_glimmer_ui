@@ -2,15 +2,14 @@ import 'package:flutter/widgets.dart';
 
 /// The Glimmer colour roles.
 ///
-/// The default values are the ones published for Jetpack Compose Glimmer. They
-/// are unchanged for mobile: an additive glasses display renders `#000000` as
-/// fully transparent, and a phone renders it as true black on OLED, so the same
-/// palette reads correctly on both.
+/// A small set of luminous accents on true black, plus the surface and outline
+/// roles every component reads. [GlimmerColors.light] re-grounds the same hues
+/// for a light background.
 ///
 /// See also:
 ///
 ///  * [GlimmerColors.contentColorFor], which picks the foreground colour for a
-///    given background the way Glimmer's `ContentColor` does.
+///    given background.
 @immutable
 class GlimmerColors {
   /// Creates a Glimmer palette with every role given explicitly.
@@ -27,7 +26,7 @@ class GlimmerColors {
     required this.onSurface,
   });
 
-  /// The published Glimmer palette.
+  /// The default dark palette.
   ///
   /// Pass [primary] to re-skin the focal colour without losing the rest of the
   /// roles.
@@ -74,7 +73,7 @@ class GlimmerColors {
   /// Glimmer states this as its base colour at tone 20, and `#303030` is what
   /// that resolves to. The developer guide quotes `#262626`, which is tone 15;
   /// the value here follows the source, so deriving the focused fill by lifting
-  /// the tone lands on the published number rather than near it.
+  /// the tone lands on the intended number rather than near it.
   final Color surface;
 
   /// The resting border colour of an unfocused surface.
@@ -88,15 +87,10 @@ class GlimmerColors {
 
   /// The palette re-grounded for a light background.
   ///
-  /// Glimmer has no light mode. It cannot: an additive lens renders black as
-  /// transparent, so a light interface would be a wall of light in front of the
-  /// wearer's eyes. A phone has no such constraint, and an app that has to sit
-  /// alongside a light system theme needs one.
-  ///
-  /// The hues are the published ones. Only lightness moves, far enough that
-  /// each role clears Glimmer's 70% tone-difference guidance against a light
-  /// ground rather than a dark one. Surfaces stop adding light and start
-  /// filtering it instead, which is the same glass seen from the other side.
+  /// The hues are the dark palette's. Only lightness moves, far enough that
+  /// each role clears the 70% tone difference against a light ground rather
+  /// than a dark one. Surfaces stop adding light and start filtering it
+  /// instead, which is the same glass seen from the other side.
   factory GlimmerColors.light({Color primary = const Color(0xFF2E6BD6)}) {
     return GlimmerColors(
       brightness: Brightness.light,
@@ -118,7 +112,7 @@ class GlimmerColors {
   /// asking the caller to set it, which is why [GlimmerText] and the component
   /// widgets never require an explicit text colour.
   ///
-  /// The rule is the published one: a background below the luminance
+  /// The rule: a background below the luminance
   /// breakpoint takes [onSurface] and anything at or above it takes
   /// [onPrimary]. Comparing against the named roles instead would look right
   /// for the default palette and then quietly fail the moment a caller passed
@@ -136,7 +130,7 @@ class GlimmerColors {
 
   /// The luminance at which content flips from light to dark.
   ///
-  /// The published value, chosen so either foreground clears the contrast ratio
+  /// Chosen so either foreground clears the contrast ratio
   /// Glimmer asks for on the background it is paired with.
   static const contentColorLuminanceBreakpoint = 0.179129;
 

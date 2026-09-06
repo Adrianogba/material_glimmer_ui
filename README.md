@@ -1,8 +1,8 @@
 <h1 align="center">Material Glimmer UI</h1>
 
 <p align="center">
-  A UI kit adapting Glimmer, Google's new design language,<br>
-  mixed with Material Design Expressive.
+  A Flutter UI kit of glass surfaces and lit edges.<br>
+  Inspired by Jetpack Compose Glimmer and Material Design.
 </p>
 
 <p align="center">
@@ -13,24 +13,21 @@
 
 ## What it is
 
-A UI kit for Flutter apps: a theme, a full token set and a widget library,
-picked the same way you pick Material or Cupertino. Everything is drawn, not
-shipped as assets, and the only dependency is Flutter itself.
+A UI kit for Flutter apps: an app widget, a theme, a full token set and a widget
+library, picked the same way you pick Material or Cupertino. Everything is
+drawn, not shipped as assets, and the only dependency is Flutter itself.
 
-The look comes from **Glimmer**, the design language Google built for its
-display glasses. Surfaces add light instead of blocking it. Focus is an outline
-that grows and brightens over 800 ms, not a ripple. Depth is the plane behind
-withdrawing, not a shadow in front or a tonal overlay. The palette is a small
-set of luminous accents on true black.
+Surfaces are glass. Each one blurs and tints whatever is painted behind it
+rather than covering it, so the colour and movement underneath still come
+through. Focus is a lit edge: an outline that grows, brightens and turns toward
+the focal colour over 800 ms. Depth is not a shadow, it is the plane behind
+withdrawing. There are no ripples anywhere.
 
-The bones come from **Material Design Expressive**: phone-sized touch targets,
-generous rounded shapes, a scaffold with a bar and a navigation strip, and the
-`ThemeData`, `ColorScheme` and `TextTheme` plumbing every Flutter app already
-speaks. So a Material widget dropped next to a Glimmer one inherits the same
-palette and type instead of clashing with it.
-
-What is left behind is everything spatial. Nothing here depends on gaze, head
-pose or a touchpad, and none of it needs an XR device.
+It is a full design system rather than a set of widgets to sprinkle on top of
+one. `GlimmerTheme` returns a real `ThemeData` with every token in a
+`ThemeExtension` and the `ColorScheme` and `TextTheme` derived from it, so a
+Material widget dropped next to one of these inherits the same palette and type
+instead of clashing with it.
 
 ## Install
 
@@ -48,6 +45,7 @@ MaterialGlimmerApp(
   title: 'Bakery',
   home: GlimmerScaffold(
     title: 'Bakery',
+    backdrop: const GlimmerBackdrop(),
     body: GlimmerList(
       title: 'Grocery list',
       children: const [
@@ -59,88 +57,20 @@ MaterialGlimmerApp(
 );
 ```
 
-`MaterialGlimmerApp` sits where `MaterialApp` and `CupertinoApp` sit, and there is a
-`MaterialGlimmerApp.router` for `go_router` users. Under the hood it is a `MaterialApp`
-carrying `GlimmerTheme.dark()`, and that is deliberate: Flutter's routing,
-localisation, scroll behaviour and text selection live there, and reimplementing
-them would buy nothing but bugs. What Glimmer replaces is the look and the
+`MaterialGlimmerApp` sits where `MaterialApp` and `CupertinoApp` sit, and there
+is a `MaterialGlimmerApp.router` for `go_router` users. Under the hood it is a
+`MaterialApp` carrying the Glimmer themes, and that is deliberate: Flutter's
+routing, localisation and text selection live there, and reimplementing them
+would buy nothing but bugs. What this kit replaces is the look and the
 interaction model, and both come from the theme.
 
-Because it is a real `ThemeData`, the Glimmer tokens are mapped onto the
-`ColorScheme` and the `TextTheme`. A Material widget placed next to a Glimmer
-one inherits the same palette and type rather than clashing with it. Adopt the
-whole system, or move one screen at a time by passing `GlimmerTheme.dark()` to
-your existing `MaterialApp`.
-
-## Fidelity
-
-Every value is labelled for what it is. Nothing is approximated without saying
-so.
-
-| Token | Upstream | Here |
-|---|---|---|
-| Colours | `primary` `#9BBFFF`, `secondary` `#4C88E9`, `positive` `#63FEA8`, `negative` `#FFA7A0`, `surface` `#303030`, `outline` `#606460` | identical |
-| Spacing | 6, 8, 12, 16, 20 | identical |
-| Focus timing | 800 ms in, 500 ms out, `LinearOutSlowInEasing` | identical |
-| Pressed | white overlay at 16%, 300 ms minimum, springs at stiffness 8000 and 50 | identical |
-| Ambient sweep | 2 s cycle, 1.8 s initial delay, 4 s repeat, envelope 0 to 0.2835 to 0.375 to 1 | identical, opt-in |
-| Border | 1.5 resting, 2 focused | identical |
-| Border gradient | four corner colours, angular, symmetric about the lit corner, rotating a quarter turn on focus | identical, as a sweep gradient rather than an AGSL shader |
-| Border blur | 2 to 8 resting, 1 to 3 focused, 5.3 to 15.9 at the ambient peak | identical radii, two passes instead of a per-pixel shader |
-| Tones | surface at 20, focused surface at 34, focused border at 85, 69 and 77 | identical, derived rather than hard-coded |
-| Depth | 5 levels, 2 black shadow layers each, no offset | 5 levels, spaced by the published spreads, applied as how far the plane behind withdraws |
-| Typography | 30/24/20 sp for title and body, 18 for caption, weight axes 725/520/650 | sizes at two thirds, line-height ratios and weights identical |
-| Shapes | 12 small, 36 standard, stadium | 8 and 24, stadium |
-| Icons | 32, 40, 48 | 21.3, 26.7, 32 |
-
-Two thirds is not a guess. Glimmer's sizes come from the 0.6 degree legibility
-floor of a lens sitting centimetres from the eye. A phone at arm's length does
-not need them, and at full size a Glimmer card does not fit the screen. For the
-published numbers, pass `GlimmerScale.glasses`:
-
-```dart
-MaterialGlimmerApp(scale: GlimmerScale.glasses, home: ...)
-```
-
-Minimum touch heights do not follow that rule. A medium button is still 48, a
-large one 72, an icon button 48. Those are touch targets, not visual
-measurements.
-
-Every value in the table is pinned by a test, so if upstream moves, the build
-says so. [TRANSLATION.md](TRANSLATION.md) is the file-by-file comparison: what
-was taken verbatim, what was changed and why, and what has not been translated
-yet.
-
-### The border is the whole thing
-
-Glimmer's border is not a stroke of one colour. It is an angular gradient with a
-different colour at each corner, symmetric about whichever corner the light
-falls on, and the entire gradient rotates a quarter turn as a surface takes
-focus. On top of that it is blurred progressively: crisp where the light lands,
-soft on the far side, sharpening as focus arrives. That is what the design
-language is named after, and a flat outline gets none of it.
-
-Upstream it is an AGSL runtime shader, so it needs Android 13 and runs on
-Android only. `GlimmerEdge` reimplements the same maths as a sweep gradient, and
-it works everywhere Flutter does. Two details matter and are easy to get wrong:
-the shader normalises each axis before taking the angle, so its corners are the
-component's real corners whatever its proportions, and the border is an inner
-one, with its outer edge on the component's boundary.
-
-`GlimmerTone` carries the tone maths the colours are stated in, so a re-skinned
-palette derives its focused fill and focused border the way the published one
-does instead of only the default looking right.
+So you can adopt the whole system, or move one screen at a time by passing
+`GlimmerTheme.dark()` to your existing `MaterialApp`.
 
 ## Backdrops
 
-On glasses, what sits behind a surface is the room. Black is rendered as fully
-transparent, so every surface is glass over whatever the wearer is looking at,
-and that is where the whole language gets its character.
-
-A phone has nothing behind the screen. Translating black literally leaves a flat
-void, the surfaces have nothing to filter, and the system loses the one thing
-that made it interesting. So the app supplies the backdrop and the surfaces
-frost it:
+A surface has to have something to be glass over. `GlimmerBackdrop` is what the
+kit paints behind everything else:
 
 ```dart
 GlimmerScaffold(
@@ -151,111 +81,135 @@ GlimmerScaffold(
 
 The default is a slow gradient built from the theme's own focal colours. Pass
 `image` for a photo, `colors` for your own gradient, or `child` for anything
-else, including live content such as a camera preview or a map.
+else, including live content such as a camera preview or a map. Over a flat fill
+the surfaces still work, they are simply doing less.
 
-## Light
+## The edge
 
-Glimmer is dark only, and on a lens it has to be: an additive display renders
-black as transparent, so a light interface would be a wall of light in front of
-the wearer. A phone has no such constraint.
+The border is the part worth knowing about. It is not a stroke of one colour: it
+is an angular gradient with a different colour at each corner, symmetric about
+whichever corner the light falls on, and the whole gradient rotates a quarter
+turn as a surface takes focus. On top of that it is blurred progressively, crisp
+where the light lands and soft on the far side, sharpening as focus arrives.
 
-`GlimmerTheme.light()` takes the published hues to the lightness they need on a
-light ground, and surfaces filter the backdrop instead of adding to it, which is
-the same glass seen from the other side. Timing, spacing, depth levels and the
-graded edge are unchanged. `MaterialGlimmerApp` builds both themes always, so
-`themeMode: ThemeMode.system` works with no other change.
+`GlimmerEdge` builds it as a sampled sweep gradient, so it works on every
+platform Flutter runs on. Two details are easy to get wrong and are handled:
+each axis is normalised before the angle is taken, so the gradient's corners are
+the component's real corners at any aspect ratio, and the stroke is an inner
+border with its outer edge on the component's boundary.
+
+`GlimmerTone` carries the perceptual lightness maths the colours are stated in,
+so a re-skinned palette derives its focused fill and focused border correctly
+rather than only the default looking right.
+
+## Depth
+
+Five levels, and none of them draws anything. A `GlimmerDepthLevel` says how far
+the plane *behind* withdraws, and it is spent by whatever owns both planes:
+`GlimmerStack` for the items behind the top of a stack, `GlimmerModalScrim` for
+the app behind a modal, which is blurred and taken back toward the ground colour
+rather than washed with black. That is why it reads correctly on a light theme,
+where a black wash is a bruise.
+
+## Light and dark
+
+`GlimmerTheme.dark()` is a small set of luminous accents on true black.
+`GlimmerTheme.light()` is the same system with the hues taken to the lightness
+they need on a light ground, where surfaces filter the backdrop instead of
+adding to it. Timing, spacing, depth and the graded edge are identical in both.
+
+`MaterialGlimmerApp` builds both always, so `themeMode: ThemeMode.system` works
+with no other change.
 
 ## Additive surfaces
 
-A lens display builds its image by adding light, so a Glimmer surface never
-hides what is behind it. `GlimmerSurface` paints its fill with `BlendMode.plus`,
-which is the same operation. Over the black Glimmer background that is
-indistinguishable from an ordinary fill. Over a photo or a gradient it becomes
-the luminous glass the language is named for.
+On dark, a surface paints its fill with `BlendMode.plus`, adding light rather
+than blocking it. Over a flat dark background that is indistinguishable from an
+ordinary fill; over a photo or a gradient it becomes luminous glass.
 
 Turn it off with `additive: false` on a surface that has to be opaque.
-
-## Components
-
-| Glimmer | Here |
-|---|---|
-| (none) | `MaterialGlimmerApp`, `MaterialGlimmerApp.router`, `GlimmerBackdrop` |
-| `Surface` | `GlimmerSurface` |
-| `Card` | `GlimmerCard` |
-| `Button`, `ToggleButton` | `GlimmerButton`, `GlimmerToggleButton` |
-| `ButtonGroup` | `GlimmerButtonGroup` |
-| `IconButton`, `IconToggleButton` | `GlimmerIconButton`, `GlimmerIconToggleButton` |
-| `Text`, `Icon` | `GlimmerText`, `GlimmerIcon` |
-| `TitleChip` | `GlimmerTitleChip` |
-| `List`, `ListItem` | `GlimmerList`, `GlimmerListItem` |
-| `HorizontalPager` | `GlimmerPager`, `GlimmerPageIndicator` |
-| `Stack` | `GlimmerStack` |
-| `Scrim` | `GlimmerScrim` |
-| the stack's item scrim | `GlimmerStack.itemRecede` |
-| `VoiceInputIndicator` | `GlimmerVoiceInputIndicator` |
-| `Colors`, `Typography`, `Shapes`, `ComponentSpacingValues`, `IconSizes`, `DepthEffectLevels` | `GlimmerColors`, `GlimmerTypography`, `GlimmerShapes`, `GlimmerSpacing`, `GlimmerIconSizes`, `GlimmerDepth` |
-| the border shader | `GlimmerEdge`, `GlimmerEdgeBlur` |
-| (none) | `GlimmerEntrance`, how a glass surface arrives without being faded |
-| HCT tone, for deriving colours | `GlimmerTone` |
-
-### Mobile additions
-
-These do not exist in Glimmer and are marked as such in the source. Display
-glasses take text by voice, show one thing at a time and are dismissed with the
-back gesture, so there is no text field, no switch and no bar across the top. A
-phone app needs all three.
-
-**Overlays.** Glasses show one thing at a time, so a panel interrupting another
-panel has nowhere to go. A phone needs all four, and the design language already
-says what they should look like: a surface over an app that has been blurred and
-withdrawn by the modal's depth level.
-
-`showGlimmerDialog` · `showGlimmerBottomSheet` · `showGlimmerSnackbar` ·
-`showGlimmerMenu` · `GlimmerDialog` · `GlimmerBottomSheet` ·
-`GlimmerSnackbar` · `GlimmerMenu` · `GlimmerModalScrim`
-
-**The rest.**
-`GlimmerSlider` · `GlimmerTextField` · `GlimmerSwitch` ·
-`GlimmerProgressBar` · `GlimmerScaffold` · `GlimmerTopBar` ·
-`GlimmerNavigationItem` · `GlimmerOverscrollIndicator`
 
 ## Scrolling
 
 Material stretches a list at its end and Cupertino bounces it. Both move the
 content, and this kit cannot afford to: a stretch renders the scrollable into an
 offscreen layer, and every glass surface inside it loses the backdrop it was
-reading. Borrowing either gesture would also mean borrowing someone else's
-identity.
+reading.
 
 So the content does not move. `GlimmerOverscrollIndicator` lights up the edge
-the list ran into, using the same graded light the surfaces use on their own
-edges: a crisp line at the boundary and a bloom falling away from it, both
-brightening with how hard the list is pushed, and falling away on the same
-spring everything else settles with. It is painted over the content, so nothing
-is isolated.
+the list ran into, with the same graded light the surfaces use: a line that
+opens from the middle outward and a bloom brightest where the push lands, both
+following how hard the list is pushed and falling away on the spring everything
+else settles with.
 
 `MaterialGlimmerApp` installs it through `GlimmerScrollBehavior`. Pass your own
 `scrollBehavior` to opt out.
 
-## Deliberately left out
+## Components
 
-- **Roving touchpad focus.** On a phone, selection belongs to your app, so each
-  surface's `focused` is yours to drive. Keyboard focus is picked up on its own
-  and gets the same treatment.
-- **The Android 13+ border shader.** Glimmer's ambient sweep is drawn by a
-  runtime shader in the glasses renderer. The timing envelope is the same here.
-  The blur is painted as a stroke instead.
-- **Google Sans Flex.** It is Glimmer's typeface and a variable one. This
-  package ships no assets. Pass `fontFamily` if you have the font in your app.
-- **Roving focus that follows a pointer.** Upstream the lit corner tracks where
-  the wearer is looking. A phone has no equivalent signal, so the rotation is
-  driven by focus arriving rather than by a direction.
+**App and structure.**
+`MaterialGlimmerApp` · `MaterialGlimmerApp.router` · `GlimmerScaffold` ·
+`GlimmerTopBar` · `GlimmerNavigationItem` · `GlimmerBackdrop`
+
+**Surfaces.**
+`GlimmerSurface` · `GlimmerCard`
+
+**Actions.**
+`GlimmerButton` · `GlimmerToggleButton` · `GlimmerButtonGroup` ·
+`GlimmerIconButton` · `GlimmerIconToggleButton`
+
+**Content.**
+`GlimmerText` · `GlimmerIcon` · `GlimmerTitleChip` ·
+`GlimmerVoiceInputIndicator`
+
+**Collections.**
+`GlimmerList` · `GlimmerListItem` · `GlimmerStack` · `GlimmerPager` ·
+`GlimmerPageIndicator` · `GlimmerScrim`
+
+**Input.**
+`GlimmerTextField` · `GlimmerSwitch` · `GlimmerSlider` · `GlimmerProgressBar`
+
+**Overlays.**
+`showGlimmerDialog` · `showGlimmerBottomSheet` · `showGlimmerSnackbar` ·
+`showGlimmerMenu` · `GlimmerDialog` · `GlimmerBottomSheet` ·
+`GlimmerSnackbar` · `GlimmerMenu` · `GlimmerModalScrim`
+
+**Tokens and machinery.**
+`GlimmerTheme` · `GlimmerTokens` · `GlimmerColors` · `GlimmerTypography` ·
+`GlimmerShapes` · `GlimmerSpacing` · `GlimmerIconSizes` · `GlimmerDepth` ·
+`GlimmerMotion` · `GlimmerEdge` · `GlimmerEdgeBlur` · `GlimmerTone` ·
+`GlimmerEntrance` · `GlimmerScrollBehavior` · `GlimmerOverscrollIndicator` ·
+`GlimmerScale`
+
+## Two scales
+
+The tokens ship at phone sizes. `GlimmerScale.glasses` switches type, corner
+radii and icon sizes to a set half again as large, for a display held much
+closer to the eye than a phone:
+
+```dart
+MaterialGlimmerApp(scale: GlimmerScale.glasses, home: ...)
+```
+
+Minimum touch heights do not change with it. A medium button is 48, a large one
+72, an icon button 48. Those are touch targets, not visual measurements.
+
+## Notes
+
+- **Focus is yours to drive.** Each surface takes a `focused` flag, so selection
+  belongs to your app. Keyboard focus is picked up on its own and gets the same
+  treatment.
+- **Glass cannot be faded.** An `Opacity` or a `FadeTransition` around a surface
+  puts it in its own layer, which takes away the backdrop it reads.
+  `GlimmerEntrance` carries an arrival progress down the tree instead and each
+  surface scales its own tint, blur and edge by it. Use it if you build a
+  surface that has to appear.
+- **No assets.** Type is whatever `fontFamily` you pass, or the platform
+  default.
 
 ## License
 
 MIT. See [LICENSE](https://github.com/Adrianogba/material_glimmer_ui/blob/main/LICENSE).
 
-Jetpack Compose Glimmer belongs to Google, under Apache 2.0. This is an
-independent package, not affiliated with Google. No Glimmer code was copied. The
-design values were read from the public documentation and the open AndroidX
-source, and reimplemented in Dart.
+Independent package, not affiliated with Google. Jetpack Compose Glimmer and
+Material Design are Google's, under Apache 2.0. No code from either was copied.

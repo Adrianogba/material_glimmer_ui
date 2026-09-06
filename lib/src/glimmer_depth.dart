@@ -2,16 +2,11 @@ import 'package:flutter/widgets.dart';
 
 /// One of Glimmer's five depth levels.
 ///
-/// Upstream a level is two stacked black shadows drawn around a component. That
-/// works on the hardware Glimmer was drawn for, where black is not a colour but
-/// the absence of one: the shadow is a hole rather than a dark halo, and what
-/// it reads as is the layer behind being taken away near the thing in front.
-///
-/// A phone screen is opaque, so painting the same two shadows gives a dark
-/// halo, which is Material's language rather than Glimmer's. Here a level says
-/// how far the plane behind withdraws instead, and nothing at all is painted
-/// around a surface. The ratios between the levels are the published spreads,
-/// so the five levels stay as far apart as they are upstream.
+/// Nothing is painted around a surface to say how high it sits. A dark halo
+/// under a pane of glass is somebody else's language, and on a light ground it
+/// is a bruise. A level says how far the plane *behind* withdraws instead, and
+/// it is spent by whatever owns both planes: [GlimmerStack] for a stack,
+/// `GlimmerModalScrim` for a modal.
 @immutable
 class GlimmerDepthLevel {
   /// Creates a depth level from how far the plane behind withdraws.
@@ -47,10 +42,10 @@ class GlimmerDepthLevel {
 
 /// The five Glimmer depth levels, from the lowest to the highest z-order.
 ///
-/// The levels are spaced by the published shadow spreads, 6, 13, 19, 26 and 32,
-/// normalised against the largest and taken up to [maxRecede]. Depth is not a
-/// measurement of anything on screen, so unlike type, radii and icon sizes it
-/// is the same at both [GlimmerScale] settings.
+/// The levels are spaced 6, 13, 19, 26 and 32, normalised against the largest
+/// and taken up to [maxRecede]. Depth is not a measurement of anything on
+/// screen, so unlike type, radii and icon sizes it is the same at both
+/// [GlimmerScale] settings.
 @immutable
 class GlimmerDepth {
   /// Creates a depth scale with every level given explicitly.
@@ -62,7 +57,7 @@ class GlimmerDepth {
     required this.level5,
   });
 
-  /// The five levels, spaced by the published shadow spreads.
+  /// The five levels at their standard spacing.
   ///
   /// [maxRecede] is how far the plane behind the front-most level withdraws.
   factory GlimmerDepth.standard({double maxRecede = 0.6}) {

@@ -5,8 +5,8 @@ Run from the package root:
     python tool/fetch_reference.py
 
 The mirror is Google's code under Apache 2.0, not ours, so reference/ is in
-both .gitignore and .pubignore. It exists only so the translation can be checked
-against the real thing; see TRANSLATION.md.
+both .gitignore and .pubignore. It exists only as a local reading copy while
+working on the kit.
 
 Gitiles serves a JSON directory listing behind an XSSI guard and base64 file
 contents, so the tree can be walked without git. The requests are throttled

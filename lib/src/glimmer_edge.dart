@@ -7,16 +7,13 @@ import 'glimmer_tone.dart';
 /// The four corner colours of a Glimmer border, and the maths that turns them
 /// into the gradient around a surface.
 ///
-/// Glimmer's border is not a stroke of one colour. It is an angular gradient
-/// with a colour at each corner, and the whole gradient rotates as a surface
-/// takes focus. That is the detail that makes a panel read as a lit edge rather
-/// than an outline someone drew, and it is what the design language is named
-/// after.
+/// The border is not a stroke of one colour. It is an angular gradient with a
+/// colour at each corner, and the whole gradient rotates as a surface takes
+/// focus. That is the detail that makes a panel read as a lit edge rather than
+/// an outline someone drew, and it is the part of this kit worth knowing about.
 ///
-/// Upstream this is an AGSL runtime shader, which needs Android 13 and works
-/// only on Android. The shader is short and its maths is plain, so it is
-/// reimplemented here as a [SweepGradient] sampled from the same functions.
-/// Every constant below is the published one.
+/// It is built as a [SweepGradient] sampled from the corner colours, rather
+/// than as a runtime shader, so it works on every platform Flutter runs on.
 @immutable
 class GlimmerEdge {
   /// Creates an edge from its four corner colours, in the order top-left,
@@ -32,7 +29,7 @@ class GlimmerEdge {
   ///
   /// Deliberately asymmetric: bright at the top-left where the light falls,
   /// darkest at the bottom-right, and part of the way back up at the
-  /// bottom-left. These are the published values and they do not depend on the
+  /// bottom-left. Fixed values: the resting edge does not follow the
   /// palette.
   const GlimmerEdge.idle()
       : topLeft = const Color(0xE6CFCFCF),
@@ -42,9 +39,9 @@ class GlimmerEdge {
 
   /// The resting edge on a light ground.
   ///
-  /// The published corners are pale greys, which is right against black and
-  /// wrong against white: the far corner is the brightest of the four, and on a
-  /// light background it lands as a white smear along the bottom of every
+  /// The dark corners are pale greys, which is right against black and wrong
+  /// against white: the far corner is the brightest of the four, and on a light
+  /// background it lands as a white smear along the bottom of every
   /// component. Light still comes from the top-left, so the highlight stays
   /// there and the rest of the ring becomes shade instead of glare.
   const GlimmerEdge.idleLight()
@@ -152,9 +149,8 @@ class GlimmerEdge {
   /// Builds the sweep gradient for a surface of [size].
   ///
   /// [focusProgress] rotates the lit corner from the top-left to the top-right
-  /// as the surface takes focus, which is the movement a wearer sees when they
-  /// look at something. On a phone it reads as the highlight sliding across the
-  /// top of whatever the finger just chose.
+  /// as the surface takes focus, so the highlight slides across the top of
+  /// whatever was just chosen.
   Gradient toGradient({
     required double focusProgress,
     int samples = 48,
@@ -193,9 +189,9 @@ class GlimmerEdge {
 
 /// How sharp the border is around the perimeter.
 ///
-/// Glimmer blurs its border progressively: crisp at the lit corner and soft on
-/// the far side, and the whole thing sharpens on focus and blooms at the peak
-/// of the ambient sweep. These are the published radii.
+/// The border is blurred progressively: crisp at the lit corner and soft on the
+/// far side, sharpening on focus and blooming at the peak of the ambient
+/// sweep.
 @immutable
 class GlimmerEdgeBlur {
   const GlimmerEdgeBlur._();
@@ -235,10 +231,9 @@ class GlimmerEdgeBlur {
 
 /// Rotates a sweep gradient and squares up the space it is measured in.
 ///
-/// The upstream shader normalises each axis independently before taking the
-/// angle, so its four colour stops land on the four actual corners of a
-/// component whatever its proportions. A sweep measured in screen space does
-/// not: on a wide button every stop crowds into the middle of the top and
+/// Each axis is normalised independently before the angle is taken, so the four
+/// colour stops land on the four actual corners of a component whatever its
+/// proportions. A sweep measured in screen space does not: on a wide button every stop crowds into the middle of the top and
 /// bottom edges, and the gradient collapses into two bright patches instead of
 /// running round the shape. Scaling the gradient's space back to a square
 /// restores the corners.

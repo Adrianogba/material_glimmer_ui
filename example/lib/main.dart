@@ -508,11 +508,11 @@ class _ComponentsPageState extends State<_ComponentsPage> {
           ],
         ),
         SizedBox(height: spacing.extraLarge),
-        const _SectionLabel('Mobile additions'),
+        const _SectionLabel('Input'),
         SizedBox(height: spacing.small),
         Text(
-          'Glimmer has no text field, switch or progress bar. Display glasses '
-          'take text by voice. These are drawn from the same tokens.',
+          'A field, a switch, a bar and a slider, all drawn from the same '
+          'tokens as everything above.',
           style:
               tokens.typography.caption.copyWith(color: tokens.colors.outline),
         ),

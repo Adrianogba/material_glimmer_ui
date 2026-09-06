@@ -39,29 +39,29 @@ class GlimmerMotion {
   /// The border width of a focused surface.
   static const focusedBorderWidth = 2.0;
 
-  /// Compose's `LinearOutSlowInEasing`, `cubic-bezier(0, 0, .2, 1)`.
+  /// The focus easing, `cubic-bezier(0, 0, .2, 1)`.
   static const focusCurve = Cubic(0.0, 0.0, 0.2, 1.0);
 
-  /// Compose's `spring(dampingRatio = .84f, stiffness = 8000f)`.
+  /// The press-in spring: damping ratio .84, stiffness 8000.
   static const pressEnterSpring = SpringDescription(
     mass: 1,
     stiffness: 8000,
     damping: 150.26,
   );
 
-  /// Compose's `spring(dampingRatio = .85f, stiffness = 50f)`.
+  /// The press-out spring: damping ratio .85, stiffness 50.
   static const pressExitSpring = SpringDescription(
     mass: 1,
     stiffness: 50,
     damping: 12.02,
   );
 
-  /// Glimmer's `spring(dampingRatio = .56f, stiffness = 118f)`, used to settle
+  /// The positional spring, damping ratio .56 and stiffness 118, used to settle
   /// something into place.
   ///
-  /// Upstream it snaps stack items. It is the only positional spring Glimmer
-  /// publishes, so anything that moves into position uses it: a sheet rising, a
-  /// dialog arriving, a snackbar sliding in.
+  /// It is the only one, so everything that moves into position uses it: a
+  /// stack item snapping, a sheet rising, a dialog arriving, a snackbar sliding
+  /// in.
   static const settleSpring = SpringDescription(
     mass: 1,
     stiffness: 118,
@@ -70,15 +70,16 @@ class GlimmerMotion {
 
   /// How long a modal surface takes to arrive or leave.
   ///
-  /// Glimmer has no modals, so this is a mobile addition. It is deliberately
-  /// far shorter than the 800 ms focus transition: focus is ambient and can
-  /// afford to be slow, while a panel the user asked for cannot.
+  /// Deliberately far shorter than the 800 ms focus transition: focus is
+  /// ambient and can afford to be slow, while a panel the user asked for
+  /// cannot.
   static const modalDuration = Duration(milliseconds: 260);
 
   /// The alpha of the veil drawn over the app behind a modal surface.
   ///
-  /// Taken from the scrim Glimmer puts over the items behind the top of a
-  /// stack, which is the same idea: this is not the thing being read.
+  /// The same value [GlimmerStack] recedes an item behind by, which is the same
+  /// idea said about a different pair of planes: this is not the thing being
+  /// read.
   static const scrimOpacity = 0.5;
 
   /// How far the app behind a modal surface is blurred.
@@ -87,9 +88,8 @@ class GlimmerMotion {
   /// The ambient sweep envelope at [progress] through
   /// [ambientPulseDuration].
   ///
-  /// The source shader ramps in over the first 28.35% of the cycle, holds to
-  /// 37.5%, then tapers across the remainder. That envelope is reproduced here
-  /// without copying the glasses-specific runtime shader that draws it.
+  /// It ramps in over the first 28.35% of the cycle, holds to 37.5%, then
+  /// tapers across the remainder.
   static double ambientEnvelope(double progress) {
     if (progress < 0.375) return (progress / 0.2835).clamp(0.0, 1.0);
     return (1 - ((progress - 0.375) / 0.625)).clamp(0.0, 1.0);

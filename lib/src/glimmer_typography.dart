@@ -2,15 +2,13 @@ import 'package:flutter/material.dart';
 
 /// The seven Glimmer text styles.
 ///
-/// Glimmer's scale is unusually flat: `titleLarge` and `bodyLarge` are the same
+/// The scale is deliberately flat: `titleLarge` and `bodyLarge` are the same
 /// size and differ only in weight, and the smallest style is a caption rather
-/// than a label. That shape is preserved here.
+/// than a label.
 ///
-/// [GlimmerTypography.glasses] carries the published sizes verbatim, which are
-/// set by the 0.6 degree legibility floor of a display lens. On a phone held at
-/// arm's length that floor does not apply, so [GlimmerTypography.mobile] scales
-/// every size by two thirds and keeps the line-height ratios and weights
-/// exactly.
+/// [GlimmerTypography.mobile] is the phone scale. [GlimmerTypography.glasses]
+/// is the same shape half again as large, with the line-height ratios and
+/// weights identical.
 @immutable
 class GlimmerTypography {
   /// Creates a type scale with every style given explicitly.
@@ -24,15 +22,13 @@ class GlimmerTypography {
     required this.caption,
   });
 
-  /// The published Glimmer scale, in glasses sizes.
+  /// The large scale, for a display held much closer to the eye than a phone.
   ///
-  /// Use it when mirroring a Glimmer layout for reference or documentation. It
-  /// is far too large for a phone.
+  /// Too large for a handset. Reasonable on a tablet or a desktop window.
   factory GlimmerTypography.glasses({String? fontFamily}) =>
       GlimmerTypography._scaled(1, fontFamily);
 
-  /// The mobile scale: the glasses sizes at two thirds, with the source
-  /// line-height ratios and weights untouched.
+  /// The phone scale, with the same line-height ratios and weights.
   factory GlimmerTypography.mobile({String? fontFamily}) =>
       GlimmerTypography._scaled(2 / 3, fontFamily);
 
@@ -61,13 +57,15 @@ class GlimmerTypography {
     );
   }
 
-  /// The largest title. 30 sp on glasses, 20 on mobile.
+  /// The largest title. 20 sp on mobile, 30 on the larger scale.
   final TextStyle titleLarge;
 
-  /// The default title for cards and screens. 24 sp on glasses, 16 on mobile.
+  /// The default title for cards and screens. 16 sp on mobile, 24 on the
+  /// larger scale.
   final TextStyle titleMedium;
 
-  /// The smallest title, for list item labels. 20 sp on glasses, 13.3 on mobile.
+  /// The smallest title, for list item labels. 13.3 sp on mobile, 20 on the
+  /// larger scale.
   final TextStyle titleSmall;
 
   /// Body copy at title size, for a single prominent sentence.

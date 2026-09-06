@@ -13,11 +13,9 @@ import 'glimmer_theme.dart';
 /// feeling like a single crossfade: the scale finishes first, then the blur,
 /// while the alpha runs the whole way.
 ///
-/// Every value here is the published one. A page centred exactly gets no
-/// transform at all, which matters on a phone: a scale, a blur or an opacity
-/// forces the page into its own layer, and a [GlimmerSurface] inside it would
-/// have no backdrop left to read. Upstream skips the effects at rest for its
-/// own reasons and it happens to be exactly what is needed here.
+/// A page centred exactly gets no transform at all, and that matters: a scale,
+/// a blur or an opacity forces the page into its own layer, and a
+/// [GlimmerSurface] inside it would have no backdrop left to read.
 ///
 /// ```dart
 /// GlimmerPager(
@@ -239,7 +237,7 @@ class _GlimmerPagerState extends State<GlimmerPager> {
   static double _lerp(double a, double b, double t) => a + ((b - a) * t);
 }
 
-/// The published values a [GlimmerPager] is built from.
+/// The values a [GlimmerPager] is built from.
 class GlimmerPagerDefaults {
   const GlimmerPagerDefaults._();
 

@@ -4,14 +4,10 @@ import 'glimmer_theme.dart';
 
 /// What sits behind Glimmer's surfaces.
 ///
-/// On display glasses this is the room. Black is rendered as fully transparent,
-/// so every surface is glass over whatever the wearer is actually looking at,
-/// and that is where the whole design language gets its character.
-///
-/// A phone has nothing behind the screen. Translating black literally leaves a
-/// flat void, the surfaces have nothing to be translucent over, and the system
-/// loses the one thing that made it interesting. So on mobile the app supplies
-/// the backdrop, and [GlimmerSurface] frosts it.
+/// A surface has to have something to be glass over. Against a flat fill the
+/// surfaces still work, they are simply doing less: the blur has nothing to
+/// soften and the tint has nothing to colour. So the app supplies a backdrop,
+/// and [GlimmerSurface] frosts it.
 ///
 /// The default is a slow gradient built from the theme's own focal colours,
 /// dark enough to keep white text at full contrast. Pass [image] for a photo,

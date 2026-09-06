@@ -4,14 +4,10 @@ import 'glimmer_theme.dart';
 
 /// A text field styled to match Glimmer.
 ///
-/// Glimmer has no text field. Display glasses take text by voice, not by
-/// keyboard, so the component does not exist upstream. A phone app needs one,
-/// and a Material `TextField` dropped into a Glimmer screen brings a filled or
+/// A Material `TextField` dropped into a Glimmer screen brings a filled or
 /// underlined decoration that belongs to a different system, so this is a
 /// border-led field built from the Glimmer tokens: the resting outline, the
 /// focal colour on focus, and the same border widths as every other surface.
-///
-/// It is a mobile addition, not a port. Nothing upstream corresponds to it.
 class GlimmerTextField extends StatefulWidget {
   /// Creates a Glimmer text field.
   const GlimmerTextField({
@@ -145,11 +141,10 @@ class _GlimmerTextFieldState extends State<GlimmerTextField> {
 
 /// A switch styled to match Glimmer.
 ///
-/// Glimmer expresses on and off with a [GlimmerToggleButton], which changes
-/// colour rather than sliding a thumb. A phone settings screen usually wants
-/// the sliding kind, so this is one drawn from the Glimmer tokens.
-///
-/// It is a mobile addition, not a port.
+/// [GlimmerToggleButton] is the other way to say on and off, and it changes
+/// colour rather than sliding a thumb. A settings screen usually wants the
+/// sliding kind, so this is one drawn from the same tokens: the track is a
+/// surface, the thumb takes the focal colour, and there is no ripple.
 class GlimmerSwitch extends StatelessWidget {
   /// Creates a Glimmer switch.
   const GlimmerSwitch({
@@ -214,9 +209,8 @@ class GlimmerSwitch extends StatelessWidget {
 /// A progress bar in the Glimmer palette.
 ///
 /// Pass a [value] between 0 and 1 for determinate progress, or leave it null
-/// for an indeterminate sweep.
-///
-/// It is a mobile addition. Glimmer has no progress component.
+/// for an indeterminate sweep. The track is a lit edge and the fill is the
+/// focal colour, so it sits in a list of surfaces without announcing itself.
 class GlimmerProgressBar extends StatelessWidget {
   /// Creates a progress bar.
   const GlimmerProgressBar({super.key, this.value, this.height = 8});

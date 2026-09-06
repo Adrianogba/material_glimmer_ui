@@ -170,15 +170,15 @@ class MaterialGlimmerApp extends StatelessWidget {
 
   /// The focal colour, used for focused outlines and prominent fills.
   ///
-  /// Defaults to the published `#9BBFFF` on dark and to its light-ground
-  /// counterpart on light.
+  /// Defaults to `#9BBFFF` on dark and to its light-ground counterpart on
+  /// light.
   final Color? primary;
 
-  /// Whether to use the mobile measurements or the published glasses ones.
+  /// Which of the two measurement sets to use.
   final GlimmerScale scale;
 
-  /// The typeface. Glimmer's own is Google Sans Flex, which is not bundled
-  /// here because this package ships no assets.
+  /// The typeface. This package ships no assets, so it is whatever font your
+  /// app already has, or the platform default.
   final String? fontFamily;
 
   /// Whether surfaces add their tint to the backdrop. See

@@ -217,16 +217,14 @@ class GlimmerList extends StatelessWidget {
 /// A collapsed list that shows one item at a time, with the next ones stacked
 /// behind it and receding.
 ///
-/// Glimmer uses a stack when the items are of different kinds, or when showing
-/// more than one at once would cover too much of what the wearer is looking at.
-/// On a phone that second reason does not apply, but the pattern still earns
-/// its place: it is the right shape for a queue of notifications, a card deck
-/// or a step-by-step flow.
+/// Use it when the items are of different kinds, or when showing all of them at
+/// once would take more of the screen than they are worth: a queue of
+/// notifications, a card deck, a step-by-step flow.
 ///
-/// The geometry is the published one. Items behind sit *below* the top item and
-/// are revealed by [revealSize], each scaled to [GlimmerStack.nextItemScale] and
-/// receding by [GlimmerStack.itemRecede] once it is fully behind. At most two
-/// are visible at a time. Moving between items uses Glimmer's snap spring.
+/// Items behind sit *below* the top one and are revealed by [revealSize], each
+/// scaled to [GlimmerStack.nextItemScale] and receding by
+/// [GlimmerStack.itemRecede] once it is fully behind. At most two are visible at
+/// a time. Moving between items uses [GlimmerMotion.settleSpring].
 ///
 /// Swipe up and down to move through the items.
 class GlimmerStack extends StatefulWidget {
@@ -261,14 +259,12 @@ class GlimmerStack extends StatefulWidget {
 
   /// How far an item recedes once it is fully behind the top one.
   ///
-  /// Upstream this is the alpha of a black scrim drawn over that item, which is
-  /// how depth is expressed on a display where black is transparent. Here it is
-  /// how far the item's own surface is taken down, which is the same thing said
-  /// from inside the surface rather than by covering it, and it lands between
-  /// [GlimmerDepth.level4] and [GlimmerDepth.level5].
+  /// The item's own surface is taken down rather than covered by a scrim, so
+  /// the card in front still shows the backdrop through the gap. It lands
+  /// between [GlimmerDepth.level4] and [GlimmerDepth.level5].
   static const itemRecede = 0.5;
 
-  /// The spring Glimmer snaps stack items with. See
+  /// The spring stack items snap with. See
   /// [GlimmerMotion.settleSpring].
   static const snapSpring = GlimmerMotion.settleSpring;
 

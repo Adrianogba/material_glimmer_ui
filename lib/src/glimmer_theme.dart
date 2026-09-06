@@ -9,17 +9,14 @@ import 'glimmer_typography.dart';
 
 /// Which set of measurements a [GlimmerTheme] uses.
 enum GlimmerScale {
-  /// Type, radii and icon sizes at two thirds of the published values.
-  ///
-  /// This is the default. Glimmer's sizes are set by the legibility floor of a
-  /// lens a few centimetres from the eye; a phone held at arm's length does not
-  /// need them, and at full size a Glimmer card overflows a handset.
+  /// Phone-sized type, radii and icon sizes. The default.
   mobile,
 
-  /// The published Glimmer measurements, unchanged.
+  /// The same, half again as large, for a display held much closer to the eye
+  /// than a phone.
   ///
-  /// Useful for reproducing a glasses layout for reference, or on a tablet or
-  /// desktop window where the sizes are not absurd.
+  /// Also reasonable on a tablet or a desktop window, where the sizes read as
+  /// generous rather than absurd.
   glasses,
 }
 
@@ -110,7 +107,7 @@ class GlimmerTokens extends ThemeExtension<GlimmerTokens> {
 
   /// How strongly a surface tints what is behind it, from 0 to 1.
   ///
-  /// At 1 the published colours come out exactly over a black background, but a
+  /// At 1 the surface colours come out exactly over a black background, but a
   /// surface over a backdrop then reads as a slab rather than as glass. The
   /// default holds it below that so the backdrop keeps coming through, which is
   /// the whole point of the material.
@@ -122,8 +119,7 @@ class GlimmerTokens extends ThemeExtension<GlimmerTokens> {
 
   /// The blur sigma applied to whatever sits behind a surface.
   ///
-  /// 18 on mobile and 0 on the glasses scale, where the real world provides the
-  /// depth of field by itself.
+  /// 26 at the mobile scale and 0 at the larger one.
   ///
   /// A blur is a compositing pass per surface. It is worth it for cards and
   /// panels; for a long list of rows, pass `blur: 0` on the row and let the
@@ -133,12 +129,12 @@ class GlimmerTokens extends ThemeExtension<GlimmerTokens> {
   /// Whether a surface adds its tint to the backdrop instead of painting over
   /// it.
   ///
-  /// This is the lens behaviour, and it is on by default because it is right in
-  /// both directions. Over the black Glimmer background, adding `#303030` to
-  /// black gives `#303030`, so the published colours come out exact. Over a
-  /// photograph or a gradient, the same operation makes the surface brighter
-  /// than what it covers, which is what a pane of glass catching light
-  /// actually does and what keeps a Glimmer panel from reading as a grey slab.
+  /// On by default on dark, because it is right in both directions. Over the
+  /// black background, adding `#303030` to black gives `#303030`, so the
+  /// surface colours come out exact. Over a photograph or a gradient, the same
+  /// operation makes the surface brighter than what it covers, which is what a
+  /// pane of glass catching light does and what keeps a panel from reading as a
+  /// grey slab.
   ///
   /// Turn it off for a surface that has to darken what is under it, such as one
   /// covering content it needs to hide.
@@ -192,22 +188,19 @@ class GlimmerTokens extends ThemeExtension<GlimmerTokens> {
 
 /// Builds a Material [ThemeData] carrying the Glimmer tokens.
 ///
-/// Glimmer itself tells you not to mix in Material components, because on an
-/// additive display Material's dark-on-light foregrounds resolve to colours the
-/// lens renders as invisible. On a phone that constraint does not exist, so this
-/// package does the opposite: it produces a real [ThemeData] whose colour scheme
-/// and text theme are derived from the Glimmer tokens, and any Material widget
-/// you drop alongside a Glimmer one inherits the same palette and type.
+/// It is a real [ThemeData] whose colour scheme and text theme are derived from
+/// the Glimmer tokens, so any Material widget dropped alongside a Glimmer one
+/// inherits the same palette and type instead of clashing with it. That also
+/// means a codebase can move over one screen at a time rather than all at
+/// once.
 class GlimmerTheme {
   const GlimmerTheme._();
 
   /// Creates the Glimmer theme.
   ///
   /// [primary] re-skins the focal colour, which is what focused outlines, glows
-  /// and primary buttons use. [scale] chooses between the mobile and the
-  /// published glasses measurements. [fontFamily] sets the typeface; Glimmer's
-  /// own is Google Sans Flex, which is not bundled here because this package
-  /// ships no assets.
+  /// and primary buttons use. [scale] chooses between the two measurement sets.
+  /// [fontFamily] sets the typeface, since this package ships no assets.
   static ThemeData dark({
     Color? primary,
     GlimmerScale scale = GlimmerScale.mobile,
@@ -228,12 +221,7 @@ class GlimmerTheme {
 
   /// Creates the Glimmer theme on a light ground.
   ///
-  /// Glimmer itself is dark only, and on a lens it has to be: an additive
-  /// display renders black as transparent, so a light interface would be a wall
-  /// of light in front of the wearer. A phone has no such constraint, and an
-  /// app that sits alongside a light system theme needs the option.
-  ///
-  /// The hues are the published ones at the lightness they need to read on a
+  /// The hues are the dark theme's at the lightness they need to read on a
   /// light ground, and surfaces filter the backdrop instead of adding to it,
   /// which is the same glass seen from the other side. The timing, the spacing,
   /// the depth levels and the graded edge are untouched.

@@ -1,29 +1,24 @@
-/// A UI kit adapting Glimmer, Google's new design language, mixed with Material
-/// Design Expressive.
+/// A Flutter UI kit of glass surfaces and lit edges.
 ///
-/// A UI kit for Flutter apps: a theme, a full token set and a widget library,
-/// picked the same way you pick Material or Cupertino. Everything is drawn
-/// rather than shipped as assets, and the only dependency is Flutter.
+/// Inspired by Jetpack Compose Glimmer and Material Design.
 ///
-/// The look comes from Glimmer, the design language Google built for its
-/// display glasses. Surfaces add light instead of blocking it, focus is an
-/// outline that grows and brightens over 800 ms rather than a ripple, depth is
-/// the plane behind withdrawing rather than a shadow in front, and the palette
-/// is a small set of luminous accents on true black.
+/// An app widget, a theme, a full token set and a widget library, picked the
+/// same way you pick Material or Cupertino. Everything is drawn rather than
+/// shipped as assets, and the only dependency is Flutter.
 ///
-/// The bones come from Material Design Expressive: phone-sized touch targets,
-/// generous rounded shapes, and the [ThemeData], [ColorScheme] and [TextTheme]
-/// plumbing every Flutter app already speaks.
+/// Surfaces are glass: each one blurs and tints whatever is painted behind it
+/// rather than covering it. Focus is a lit edge that grows, brightens and turns
+/// toward the focal colour over 800 ms. Depth is the plane behind withdrawing
+/// rather than a shadow in front. There are no ripples anywhere.
 ///
-/// Colours, spacing and motion timing are the published values, and the depth
-/// levels keep the published spacing between them. Type, corner radii and icon
-/// sizes are scaled to two thirds, because Glimmer's sizes are set by the
-/// legibility floor of a lens a few centimetres from the eye and a phone at
-/// arm's length does not need them.
-/// Pass [GlimmerScale.glasses] to opt out and get the published numbers.
+/// [GlimmerTheme] returns a real [ThemeData] with every token in a
+/// [ThemeExtension] and the [ColorScheme] and [TextTheme] derived from it, so a
+/// Material widget dropped next to one of these inherits the same palette and
+/// type instead of clashing with it. Adopt the whole system, or move one screen
+/// at a time by passing [GlimmerTheme.dark] to an existing [MaterialApp].
 ///
-/// Everything spatial is left behind. Nothing here depends on gaze, head pose
-/// or a touchpad.
+/// The tokens ship at phone sizes. Pass [GlimmerScale.glasses] for the larger
+/// set, meant for a display held much closer to the eye.
 ///
 /// ```dart
 /// MaterialGlimmerApp(

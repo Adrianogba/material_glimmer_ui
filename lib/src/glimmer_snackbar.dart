@@ -13,9 +13,8 @@ import 'glimmer_theme.dart';
 /// which is useful for putting a message somewhere other than the bottom of the
 /// screen.
 ///
-/// Glimmer has no snackbar, but it does have a shape for this: everything
-/// transient in the language is a stadium-edged pill, so that is what a message
-/// is. It sits above the content and below a modal.
+/// Everything transient in this kit is a stadium-edged pill, so that is what a
+/// message is. It sits above the content and below a modal.
 class GlimmerSnackbar extends StatelessWidget {
   /// Creates a snackbar pill.
   const GlimmerSnackbar({

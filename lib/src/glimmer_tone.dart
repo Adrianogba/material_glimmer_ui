@@ -5,19 +5,16 @@ import 'package:flutter/widgets.dart';
 /// Perceptual lightness, the axis Glimmer derives its surface and border
 /// colours along.
 ///
-/// Glimmer does not hand-pick those colours. It states them as tones: a surface
-/// is its base colour at tone 20, a focused surface the same colour at tone 34,
+/// Those colours are not hand-picked, they are stated as tones: a surface is
+/// its base colour at tone 20, a focused surface the same colour at tone 34,
 /// and the four corners of a focused border are the focal colour at tones 85,
-/// 69 and 77 with white at the lit corner. Reproducing the look means
-/// reproducing the tone maths, not copying the six values it happens to produce
-/// for one palette.
+/// 69 and 77 with white at the lit corner. That is what makes a re-skinned
+/// palette derive its own focused fill and border correctly instead of only
+/// the default looking right.
 ///
-/// Upstream that axis is HCT's T. T is defined as CIELAB's L*, so that is what
-/// is implemented here, and for the tone shifts Glimmer actually performs the
-/// two agree closely. The one thing this does not reproduce is HCT's gamut
-/// solve, which re-finds the maximum chroma available at the new tone. Colours
-/// that leave sRGB after a large lightness shift are clamped per channel
-/// instead, which desaturates slightly where HCT would hold the hue.
+/// Tone here is CIELAB's L*. Colours that leave sRGB after a large lightness
+/// shift are clamped per channel, which desaturates slightly rather than
+/// re-finding the maximum chroma available at the new tone.
 extension GlimmerTone on Color {
   /// This colour's perceptual lightness, from 0 (black) to 100 (white).
   double get tone {
