@@ -229,10 +229,6 @@ class _GlimmerNavigationStrip extends StatelessWidget {
               borderRadius: tokens.shapes.stadium,
               padding: EdgeInsets.symmetric(vertical: tokens.spacing.small),
               focused: selected,
-              // The destinations already sit inside the strip's own surface, so
-              // lifting the selected one would put a shadow on a plane that has
-              // not changed.
-              liftOnFocus: false,
               semanticLabel: item.label,
               onTap: onChanged == null ? null : () => onChanged!(index),
               child: Column(

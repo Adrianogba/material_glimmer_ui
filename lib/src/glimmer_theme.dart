@@ -9,7 +9,7 @@ import 'glimmer_typography.dart';
 
 /// Which set of measurements a [GlimmerTheme] uses.
 enum GlimmerScale {
-  /// Type, radii, icon sizes and depth at two thirds of the published values.
+  /// Type, radii and icon sizes at two thirds of the published values.
   ///
   /// This is the default. Glimmer's sizes are set by the legibility floor of a
   /// lens a few centimetres from the eye; a phone held at arm's length does not
@@ -70,12 +70,10 @@ class GlimmerTokens extends ThemeExtension<GlimmerTokens> {
       iconSizes: isMobile
           ? const GlimmerIconSizes.mobile()
           : const GlimmerIconSizes.glasses(),
-      // The published shadow alphas assume a pure black ground. Over a backdrop
-      // they read as a dark halo and on a light ground as a bruise, so both
-      // themes pull them well down.
-      depth: isMobile
-          ? GlimmerDepth.mobile(opacity: isDark ? 0.55 : 0.12)
-          : GlimmerDepth.glasses(opacity: isDark ? 0.55 : 0.12),
+      // Depth is how far the plane behind withdraws, not a shadow drawn
+      // around the thing in front, so it is a ratio rather than a measurement
+      // and does not follow the two-thirds rule.
+      depth: GlimmerDepth.standard(),
       // A light surface cannot add light: white plus anything is white. It
       // filters what is behind it instead, which is the same glass seen from
       // the other side.
@@ -107,7 +105,7 @@ class GlimmerTokens extends ThemeExtension<GlimmerTokens> {
   /// The icon sizes.
   final GlimmerIconSizes iconSizes;
 
-  /// The five depth levels.
+  /// The five depth levels, as how far the plane behind withdraws.
   final GlimmerDepth depth;
 
   /// How strongly a surface tints what is behind it, from 0 to 1.

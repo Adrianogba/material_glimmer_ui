@@ -19,7 +19,7 @@ import 'glimmer_theme.dart';
 /// hard the list is pushed. It is painted over the content rather than by
 /// transforming it, so nothing is isolated and the glass keeps working.
 ///
-/// [GlimmerScrollBehavior] installs it, so an app using [GlimmerApp] gets it
+/// [GlimmerScrollBehavior] installs it, so an app using [MaterialGlimmerApp] gets it
 /// without asking.
 class GlimmerOverscrollIndicator extends StatefulWidget {
   /// Creates an overscroll indicator around [child].
@@ -155,56 +155,95 @@ class _GlimmerOverscrollPainter extends CustomPainter {
     bool vertical, {
     required bool atStart,
   }) {
-    final span = vertical ? size.height : size.width;
+    final span = vertical ? size.width : size.height;
+    final depth = vertical ? size.height : size.width;
     final reach = math.min(
       GlimmerOverscrollIndicator.bloomExtent * strength,
-      span / 2,
+      depth / 2,
     );
-    if (reach <= 0) return;
+    if (reach <= 0 || span <= 0) return;
 
-    final rect = vertical
-        ? (atStart
-            ? Rect.fromLTWH(0, 0, size.width, reach)
-            : Rect.fromLTWH(0, size.height - reach, size.width, reach))
-        : (atStart
-            ? Rect.fromLTWH(0, 0, reach, size.height)
-            : Rect.fromLTWH(size.width - reach, 0, reach, size.height));
+    // The line opens from the middle outward rather than appearing all at once
+    // along the whole edge. A full-width line arriving in one frame reads as a
+    // border switching on; a line that grows from the point of contact reads as
+    // the push landing somewhere.
+    final half = (span / 2) * _openness(strength);
+    final centre = span / 2;
+    final from = centre - half;
+    final to = centre + half;
+    if (to - from <= 0) return;
 
-    final from = vertical
+    final near = atStart ? 0.0 : (vertical ? size.height : size.width) - reach;
+    final band = vertical
+        ? Rect.fromLTWH(from, near, to - from, reach)
+        : Rect.fromLTWH(near, from, reach, to - from);
+
+    final inward = vertical
         ? (atStart ? Alignment.topCenter : Alignment.bottomCenter)
         : (atStart ? Alignment.centerLeft : Alignment.centerRight);
 
-    // The bloom, falling away from the edge.
-    canvas.drawRect(
-      rect,
-      Paint()
-        ..shader = LinearGradient(
-          begin: from,
-          end: -from,
-          colors: [
-            color.withValues(alpha: 0.28 * strength),
-            const Color(0x00000000),
-          ],
-        ).createShader(rect),
-    );
+    // The bloom falls away from the edge and also away from the middle, so the
+    // light is brightest exactly where the line is being pushed.
+    canvas
+      ..save()
+      ..clipRect(band)
+      ..drawRect(
+        band,
+        Paint()
+          ..shader = LinearGradient(
+            begin: inward,
+            end: -inward,
+            colors: [
+              color.withValues(alpha: 0.32 * strength),
+              const Color(0x00000000),
+            ],
+          ).createShader(band),
+      )
+      ..drawRect(
+        band,
+        Paint()
+          ..blendMode = BlendMode.dstIn
+          ..shader = LinearGradient(
+            begin: vertical ? Alignment.centerLeft : Alignment.topCenter,
+            end: vertical ? Alignment.centerRight : Alignment.bottomCenter,
+            colors: const [
+              Color(0x00000000),
+              Color(0xFF000000),
+              Color(0x00000000),
+            ],
+            stops: const [0, 0.5, 1],
+          ).createShader(band),
+      )
+      ..restore();
 
-    // The line at the boundary itself, which is what makes it read as an edge
-    // rather than as a wash.
+    // The line itself, tapering to nothing at both ends so it has no hard tips.
     final line = vertical
-        ? (atStart
-            ? Rect.fromLTWH(0, 0, size.width, 2)
-            : Rect.fromLTWH(0, size.height - 2, size.width, 2))
-        : (atStart
-            ? Rect.fromLTWH(0, 0, 2, size.height)
-            : Rect.fromLTWH(size.width - 2, 0, 2, size.height));
+        ? Rect.fromLTWH(from, atStart ? 0 : size.height - 2, to - from, 2)
+        : Rect.fromLTWH(atStart ? 0 : size.width - 2, from, 2, to - from);
 
     canvas.drawRect(
       line,
       Paint()
-        ..color = Color.lerp(color, const Color(0xFFFFFFFF), 0.4)!
-            .withValues(alpha: 0.9 * strength),
+        ..shader = LinearGradient(
+          begin: vertical ? Alignment.centerLeft : Alignment.topCenter,
+          end: vertical ? Alignment.centerRight : Alignment.bottomCenter,
+          colors: [
+            color.withValues(alpha: 0),
+            Color.lerp(color, const Color(0xFFFFFFFF), 0.45)!
+                .withValues(alpha: 0.95 * strength),
+            color.withValues(alpha: 0),
+          ],
+          stops: const [0, 0.5, 1],
+        ).createShader(line),
     );
   }
+
+  /// How much of the edge the line covers at a given strength.
+  ///
+  /// It opens quickly and then keeps widening, so a small push already shows
+  /// something and a hard one reaches the corners.
+  static double _openness(double strength) =>
+      math.min(1, 0.25 + (strength * 0.85));
 
   @override
   bool shouldRepaint(_GlimmerOverscrollPainter old) =>

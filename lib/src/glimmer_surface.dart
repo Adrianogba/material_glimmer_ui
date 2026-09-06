@@ -3,11 +3,11 @@ import 'dart:math' as math;
 import 'dart:ui' as ui show ImageFilter;
 import 'dart:ui' show lerpDouble;
 
-import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 
 import 'glimmer_depth.dart';
+import 'glimmer_entrance.dart';
 import 'glimmer_edge.dart';
 import 'glimmer_motion.dart';
 import 'glimmer_theme.dart';
@@ -28,12 +28,11 @@ import 'glimmer_tone.dart';
 ///
 /// Three interaction states:
 ///
-///  * **Resting.** A 1.5 px lit edge in [GlimmerColors.outline] and, by
-///    default, no shadow at all.
+///  * **Resting.** A 1.5 px lit edge in [GlimmerColors.outline].
 ///  * **Focused.** Over 800 ms the edge grows to 2 px and turns the focal
-///    colour, the tint brightens, and the surface takes [focusedDepth] so it
-///    reads as lifting toward the viewer. Leaving focus takes 500 ms. Both use
-///    Compose's LinearOutSlowInEasing.
+///    colour and the tint brightens, so the surface reads as turning toward
+///    the light. Leaving focus takes 500 ms. Both use Compose's
+///    LinearOutSlowInEasing.
 ///  * **Pressed.** A white overlay at 16%, sprung in and out with the source
 ///    stiffness, held for at least 300 ms so a quick tap is still seen.
 ///
@@ -44,6 +43,12 @@ import 'glimmer_tone.dart';
 ///
 /// Touch does not draw a Material ripple. Glimmer's press state is a flat
 /// overlay, and mixing the two reads as two systems arguing.
+///
+/// Nothing is painted around a surface to say how high it sits. Depth in
+/// Glimmer is not a shadow cast by the thing in front, it is the plane behind
+/// withdrawing, so it lives on [GlimmerDepthLevel] and is applied by whatever
+/// owns both planes: [GlimmerStack] for a stack, [GlimmerModalScrim] for a
+/// modal.
 class GlimmerSurface extends StatefulWidget {
   /// Creates a Glimmer surface around [child].
   const GlimmerSurface({
@@ -59,9 +64,6 @@ class GlimmerSurface extends StatefulWidget {
     this.borderColor,
     this.focusedBorderColor,
     this.borderRadius,
-    this.depth,
-    this.focusedDepth,
-    this.liftOnFocus = true,
     this.opacity,
     this.blur,
     this.additive,
@@ -114,20 +116,6 @@ class GlimmerSurface extends StatefulWidget {
 
   /// The corner radius. Defaults to [GlimmerShapes.medium].
   final BorderRadius? borderRadius;
-
-  /// The resting depth level. Defaults to none, as Glimmer specifies.
-  final GlimmerDepthLevel? depth;
-
-  /// The focused depth level. Defaults to [GlimmerDepth.level2].
-  final GlimmerDepthLevel? focusedDepth;
-
-  /// Whether the surface takes a shadow when it is focused.
-  ///
-  /// Turn it off for a surface that already sits inside another one. Glimmer
-  /// uses depth to say which plane a thing is on, and a nested surface is not
-  /// on a new plane; giving it a shadow reads as a sticker stuck to a panel
-  /// rather than as a selection.
-  final bool liftOnFocus;
 
   /// Overrides [GlimmerTokens.surfaceOpacity] for this surface.
   ///
@@ -265,6 +253,7 @@ class _GlimmerSurfaceState extends State<GlimmerSurface>
     required Color focal,
     required Color? override,
     required Color? fill,
+    required Brightness brightness,
   }) {
     final GlimmerEdge idle;
     if (override != null) {
@@ -280,7 +269,9 @@ class _GlimmerSurfaceState extends State<GlimmerSurface>
       // grey ring with a colour of its own.
       idle = GlimmerEdge.onFill(fill);
     } else {
-      idle = const GlimmerEdge.idle();
+      idle = brightness == Brightness.dark
+          ? const GlimmerEdge.idle()
+          : const GlimmerEdge.idleLight();
     }
     final edge = GlimmerEdge.lerp(
       idle,
@@ -301,8 +292,13 @@ class _GlimmerSurfaceState extends State<GlimmerSurface>
     final radius = widget.borderRadius ?? tokens.shapes.medium;
     final enabled = widget.onTap != null || widget.onLongPress != null;
     final additive = widget.additive ?? tokens.additive;
-    final opacity = (widget.opacity ?? tokens.surfaceOpacity).clamp(0.0, 1.0);
-    final blur = widget.blur ?? tokens.surfaceBlur;
+    // A surface arrives by scaling its own tint, blur and edge rather
+    // than by being faded. An opacity layer would take the backdrop away from
+    // it for the whole animation and hand it back in one frame at the end.
+    final entrance = GlimmerEntrance.of(context);
+    final opacity =
+        (widget.opacity ?? tokens.surfaceOpacity).clamp(0.0, 1.0) * entrance;
+    final blur = (widget.blur ?? tokens.surfaceBlur) * entrance;
 
     // Glimmer states its fills as tones rather than as hex values: a surface is
     // its base colour at tone 20 and a focused one the same colour at tone 34.
@@ -320,10 +316,6 @@ class _GlimmerSurfaceState extends State<GlimmerSurface>
             .withTone(baseTint.tone + _focusedToneLift)
             .withValues(alpha: baseTint.a * tintOpacity);
     final focalEdge = widget.focusedBorderColor ?? colors.primary;
-    final restingDepth = widget.depth;
-    final focusedDepth = widget.liftOnFocus
-        ? (widget.focusedDepth ?? tokens.depth.level2)
-        : widget.depth;
     final contentColor = colors.contentColorFor(widget.color ?? colors.surface);
 
     return Semantics(
@@ -381,14 +373,6 @@ class _GlimmerSurfaceState extends State<GlimmerSurface>
                       );
 
                 return CustomPaint(
-                  painter: _GlimmerSurfaceShadows(
-                    radius: radius,
-                    shadows: GlimmerDepthLevel.lerp(
-                      restingDepth,
-                      focusedDepth,
-                      focusProgress,
-                    ),
-                  ),
                   foregroundPainter: _GlimmerSurfaceEdge(
                     radius: radius,
                     edge: _edgeFor(
@@ -398,7 +382,8 @@ class _GlimmerSurfaceState extends State<GlimmerSurface>
                       override: widget.borderColor,
                       fill:
                           widget.color == colors.surface ? null : widget.color,
-                    ),
+                      brightness: colors.brightness,
+                    ).scaleAlpha(entrance),
                     edgeWidth: lerpDouble(
                       GlimmerMotion.borderWidth,
                       GlimmerMotion.focusedBorderWidth,
@@ -409,9 +394,18 @@ class _GlimmerSurfaceState extends State<GlimmerSurface>
                     pressedOpacity:
                         GlimmerMotion.pressedOverlayOpacity * pressed,
                   ),
-                  child: ClipRRect(
-                    borderRadius: radius,
-                    child: BackdropFilter(filter: filter, child: child),
+                  // A surface is a pane, not a decoration: a touch that lands
+                  // on it stops there even where the content has a gap. The
+                  // shape used to absorb hits only as a side effect of the
+                  // shadow painter behind it, so removing that painter would
+                  // otherwise let a tap on the blank part of a dialog fall
+                  // through to the scrim and dismiss it.
+                  child: Listener(
+                    behavior: HitTestBehavior.opaque,
+                    child: ClipRRect(
+                      borderRadius: radius,
+                      child: BackdropFilter(filter: filter, child: child),
+                    ),
                   ),
                 );
               },
@@ -449,7 +443,15 @@ class _GlimmerSurfaceState extends State<GlimmerSurface>
                   color: contentColor,
                   size: tokens.iconSizes.medium,
                 ),
-                child: Padding(padding: widget.padding, child: widget.child),
+                // The content is faded, not the surface. This sits inside
+                // the backdrop filter, so fading it costs nothing.
+                child: Opacity(
+                  opacity: entrance,
+                  child: Padding(
+                    padding: widget.padding,
+                    child: widget.child,
+                  ),
+                ),
               ),
             ),
           ),
@@ -498,52 +500,6 @@ class _GlimmerSurfaceGesture extends StatelessWidget {
       ),
     );
   }
-}
-
-class _GlimmerSurfaceShadows extends CustomPainter {
-  const _GlimmerSurfaceShadows({required this.radius, required this.shadows});
-
-  final BorderRadius radius;
-  final List<BoxShadow> shadows;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (shadows.isEmpty) return;
-    final rrect = radius.toRRect(Offset.zero & size);
-
-    // The shadow is drawn only outside the surface's own shape. Under an opaque
-    // fill it was invisible either way, but a glass surface reads what is
-    // painted behind it, so a shadow left underneath gets pulled into its own
-    // blur and washes the panel black. Clipping it out is also what a drop
-    // shadow means: it falls around the thing, not under it.
-    var reach = 0.0;
-    for (final shadow in shadows) {
-      reach = math.max(
-        reach,
-        shadow.blurRadius + shadow.spreadRadius + shadow.offset.distance,
-      );
-    }
-    final outside = Path.combine(
-      PathOperation.difference,
-      Path()..addRect((Offset.zero & size).inflate(reach + 1)),
-      Path()..addRRect(rrect),
-    );
-
-    canvas
-      ..save()
-      ..clipPath(outside);
-    for (final shadow in shadows) {
-      canvas.drawRRect(
-        rrect.shift(shadow.offset).inflate(shadow.spreadRadius),
-        shadow.toPaint(),
-      );
-    }
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(_GlimmerSurfaceShadows old) =>
-      old.radius != radius || !listEquals(old.shadows, shadows);
 }
 
 /// Draws the press overlay and the graded, progressively blurred border.

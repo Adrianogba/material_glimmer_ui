@@ -151,49 +151,53 @@ void main() {
   });
 
   group('depth', () {
-    test('glasses levels carry the published radii and spreads', () {
-      final depth = GlimmerDepth.glasses();
-      expect(depth.level1.layer1.blurRadius, 12);
-      expect(depth.level1.layer1.spreadRadius, 6);
-      expect(depth.level1.layer2.blurRadius, 6);
-      expect(depth.level1.layer2.spreadRadius, 2);
-      expect(depth.level5.layer1.blurRadius, 56);
-      expect(depth.level5.layer1.spreadRadius, 32);
-    });
-
-    test('layer 1 is black at 90% and layer 2 is opaque', () {
-      final level = GlimmerDepth.glasses().level3;
-      expect(level.layer1.color.toARGB32(), 0xE6000000);
-      expect(level.layer2.color.toARGB32(), 0xFF000000);
-    });
-
-    test('neither layer is offset', () {
+    test('the levels keep the ratios of the published spreads', () {
+      final depth = GlimmerDepth.standard(maxRecede: 1);
+      const spreads = [6.0, 13.0, 19.0, 26.0, 32.0];
       for (var i = 1; i <= 5; i++) {
-        final level = GlimmerDepth.glasses()[i];
-        expect(level.layer1.offset, Offset.zero);
-        expect(level.layer2.offset, Offset.zero);
+        expect(depth[i].recede, closeTo(spreads[i - 1] / 32, 1e-9));
       }
     });
 
+    test('the front-most level recedes by maxRecede', () {
+      expect(GlimmerDepth.standard().level5.recede, closeTo(0.6, 1e-9));
+      expect(
+        GlimmerDepth.standard(maxRecede: 0.4).level5.recede,
+        closeTo(0.4, 1e-9),
+      );
+    });
+
     test('levels grow monotonically', () {
-      final depth = GlimmerDepth.mobile();
+      final depth = GlimmerDepth.standard();
       var previous = 0.0;
       for (var i = 1; i <= 5; i++) {
-        final blur = depth[i].layer1.blurRadius;
-        expect(blur, greaterThan(previous));
-        previous = blur;
+        expect(depth[i].recede, greaterThan(previous));
+        previous = depth[i].recede;
       }
     });
 
     test('indexing outside 1 to 5 throws', () {
-      expect(() => GlimmerDepth.mobile()[0], throwsRangeError);
-      expect(() => GlimmerDepth.mobile()[6], throwsRangeError);
+      expect(() => GlimmerDepth.standard()[0], throwsRangeError);
+      expect(() => GlimmerDepth.standard()[6], throwsRangeError);
     });
 
-    test('lerping from no level starts at no shadow', () {
-      final level = GlimmerDepth.mobile().level2;
-      expect(GlimmerDepthLevel.lerp(null, level, 0), isEmpty);
-      expect(GlimmerDepthLevel.lerp(null, level, 1).length, 2);
+    test('lerping from no level starts flat', () {
+      final level = GlimmerDepth.standard().level2;
+      expect(GlimmerDepthLevel.lerp(null, level, 0), 0);
+      expect(GlimmerDepthLevel.lerp(null, level, 1), level.recede);
+      expect(
+        GlimmerDepthLevel.lerp(null, level, 0.5),
+        closeTo(level.recede / 2, 1e-9),
+      );
+    });
+
+    // Glimmer draws its depth as two black shadows, which only works where
+    // black is transparent. On an opaque screen the same shadows are a dark
+    // halo, which is Material's language, so nothing is painted around a
+    // surface at all.
+    test('a depth level is a withdrawal rather than a shadow', () {
+      expect(const GlimmerDepthLevel(0.5).recede, 0.5);
+      expect(() => GlimmerDepthLevel(1.4), throwsAssertionError);
     });
   });
 
@@ -259,7 +263,7 @@ void main() {
       expect(tokens.typography.titleLarge.fontSize, 30);
       expect(tokens.shapes.medium.topLeft.x, 36);
       expect(tokens.iconSizes.large, 48);
-      expect(tokens.depth.level5.layer1.blurRadius, 56);
+      expect(tokens.depth.level5.recede, closeTo(0.6, 1e-9));
     });
 
     test('tokens lerp across every scale', () {

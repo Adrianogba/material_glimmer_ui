@@ -19,8 +19,9 @@ shipped as assets, and the only dependency is Flutter itself.
 
 The look comes from **Glimmer**, the design language Google built for its
 display glasses. Surfaces add light instead of blocking it. Focus is an outline
-that grows and brightens over 800 ms, not a ripple. Depth is a real shadow, not
-a tonal overlay. The palette is a small set of luminous accents on true black.
+that grows and brightens over 800 ms, not a ripple. Depth is the plane behind
+withdrawing, not a shadow in front or a tonal overlay. The palette is a small
+set of luminous accents on true black.
 
 The bones come from **Material Design Expressive**: phone-sized touch targets,
 generous rounded shapes, a scaffold with a bar and a navigation strip, and the
@@ -43,7 +44,7 @@ flutter pub add material_glimmer_ui
 import 'package:flutter/material.dart';
 import 'package:material_glimmer_ui/material_glimmer_ui.dart';
 
-GlimmerApp(
+MaterialGlimmerApp(
   title: 'Bakery',
   home: GlimmerScaffold(
     title: 'Bakery',
@@ -58,8 +59,8 @@ GlimmerApp(
 );
 ```
 
-`GlimmerApp` sits where `MaterialApp` and `CupertinoApp` sit, and there is a
-`GlimmerApp.router` for `go_router` users. Under the hood it is a `MaterialApp`
+`MaterialGlimmerApp` sits where `MaterialApp` and `CupertinoApp` sit, and there is a
+`MaterialGlimmerApp.router` for `go_router` users. Under the hood it is a `MaterialApp`
 carrying `GlimmerTheme.dark()`, and that is deliberate: Flutter's routing,
 localisation, scroll behaviour and text selection live there, and reimplementing
 them would buy nothing but bugs. What Glimmer replaces is the look and the
@@ -87,7 +88,7 @@ so.
 | Border gradient | four corner colours, angular, symmetric about the lit corner, rotating a quarter turn on focus | identical, as a sweep gradient rather than an AGSL shader |
 | Border blur | 2 to 8 resting, 1 to 3 focused, 5.3 to 15.9 at the ambient peak | identical radii, two passes instead of a per-pixel shader |
 | Tones | surface at 20, focused surface at 34, focused border at 85, 69 and 77 | identical, derived rather than hard-coded |
-| Depth | 5 levels, 2 black shadow layers each, no offset | radii and spreads at two thirds |
+| Depth | 5 levels, 2 black shadow layers each, no offset | 5 levels, spaced by the published spreads, applied as how far the plane behind withdraws |
 | Typography | 30/24/20 sp for title and body, 18 for caption, weight axes 725/520/650 | sizes at two thirds, line-height ratios and weights identical |
 | Shapes | 12 small, 36 standard, stadium | 8 and 24, stadium |
 | Icons | 32, 40, 48 | 21.3, 26.7, 32 |
@@ -98,7 +99,7 @@ not need them, and at full size a Glimmer card does not fit the screen. For the
 published numbers, pass `GlimmerScale.glasses`:
 
 ```dart
-GlimmerApp(scale: GlimmerScale.glasses, home: ...)
+MaterialGlimmerApp(scale: GlimmerScale.glasses, home: ...)
 ```
 
 Minimum touch heights do not follow that rule. A medium button is still 48, a
@@ -161,7 +162,7 @@ the wearer. A phone has no such constraint.
 `GlimmerTheme.light()` takes the published hues to the lightness they need on a
 light ground, and surfaces filter the backdrop instead of adding to it, which is
 the same glass seen from the other side. Timing, spacing, depth levels and the
-graded edge are unchanged. `GlimmerApp` builds both themes always, so
+graded edge are unchanged. `MaterialGlimmerApp` builds both themes always, so
 `themeMode: ThemeMode.system` works with no other change.
 
 ## Additive surfaces
@@ -178,7 +179,7 @@ Turn it off with `additive: false` on a surface that has to be opaque.
 
 | Glimmer | Here |
 |---|---|
-| (none) | `GlimmerApp`, `GlimmerApp.router`, `GlimmerBackdrop` |
+| (none) | `MaterialGlimmerApp`, `MaterialGlimmerApp.router`, `GlimmerBackdrop` |
 | `Surface` | `GlimmerSurface` |
 | `Card` | `GlimmerCard` |
 | `Button`, `ToggleButton` | `GlimmerButton`, `GlimmerToggleButton` |
@@ -190,10 +191,11 @@ Turn it off with `additive: false` on a surface that has to be opaque.
 | `HorizontalPager` | `GlimmerPager`, `GlimmerPageIndicator` |
 | `Stack` | `GlimmerStack` |
 | `Scrim` | `GlimmerScrim` |
-| the stack's item scrim | `GlimmerStack.itemScrimColor` |
+| the stack's item scrim | `GlimmerStack.itemRecede` |
 | `VoiceInputIndicator` | `GlimmerVoiceInputIndicator` |
 | `Colors`, `Typography`, `Shapes`, `ComponentSpacingValues`, `IconSizes`, `DepthEffectLevels` | `GlimmerColors`, `GlimmerTypography`, `GlimmerShapes`, `GlimmerSpacing`, `GlimmerIconSizes`, `GlimmerDepth` |
 | the border shader | `GlimmerEdge`, `GlimmerEdgeBlur` |
+| (none) | `GlimmerEntrance`, how a glass surface arrives without being faded |
 | HCT tone, for deriving colours | `GlimmerTone` |
 
 ### Mobile additions
@@ -205,8 +207,8 @@ phone app needs all three.
 
 **Overlays.** Glasses show one thing at a time, so a panel interrupting another
 panel has nowhere to go. A phone needs all four, and the design language already
-says what they should look like: a surface at a high depth level over an app
-that has been blurred and dimmed.
+says what they should look like: a surface over an app that has been blurred and
+withdrawn by the modal's depth level.
 
 `showGlimmerDialog` · `showGlimmerBottomSheet` · `showGlimmerSnackbar` ·
 `showGlimmerMenu` · `GlimmerDialog` · `GlimmerBottomSheet` ·
@@ -232,7 +234,7 @@ brightening with how hard the list is pushed, and falling away on the same
 spring everything else settles with. It is painted over the content, so nothing
 is isolated.
 
-`GlimmerApp` installs it through `GlimmerScrollBehavior`. Pass your own
+`MaterialGlimmerApp` installs it through `GlimmerScrollBehavior`. Pass your own
 `scrollBehavior` to opt out.
 
 ## Deliberately left out

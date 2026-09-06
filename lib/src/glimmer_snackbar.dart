@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'glimmer_entrance.dart';
 import 'glimmer_motion.dart';
 import 'glimmer_surface.dart';
 import 'glimmer_theme.dart';
@@ -14,7 +15,7 @@ import 'glimmer_theme.dart';
 ///
 /// Glimmer has no snackbar, but it does have a shape for this: everything
 /// transient in the language is a stadium-edged pill, so that is what a message
-/// is. It sits at depth level 3, above the content and below a modal.
+/// is. It sits above the content and below a modal.
 class GlimmerSnackbar extends StatelessWidget {
   /// Creates a snackbar pill.
   const GlimmerSnackbar({
@@ -47,7 +48,6 @@ class GlimmerSnackbar extends StatelessWidget {
 
     return GlimmerSurface(
       borderRadius: tokens.shapes.stadium,
-      depth: tokens.depth.level3,
       padding: EdgeInsets.symmetric(
         horizontal: spacing.large,
         vertical: spacing.medium,
@@ -289,10 +289,15 @@ class _GlimmerSnackbarLayerState extends State<_GlimmerSnackbarLayer>
           begin: const Offset(0, 1.4),
           end: Offset.zero,
         ).animate(_eased),
-        child: FadeTransition(
-          opacity: _eased,
-          // The pill lives in the overlay, above whatever Material the app
-          // provides, so it establishes its own.
+        // The pill is glass, so it arrives through GlimmerEntrance rather than
+        // a FadeTransition. It also lives in the overlay, above whatever
+        // Material the app provides, so it establishes its own.
+        child: AnimatedBuilder(
+          animation: _eased,
+          builder: (context, child) => GlimmerEntrance(
+            progress: _eased.value,
+            child: child!,
+          ),
           child: Material(
             type: MaterialType.transparency,
             child: Center(child: widget.child),

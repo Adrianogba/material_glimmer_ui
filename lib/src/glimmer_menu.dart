@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'glimmer_entrance.dart';
 import 'glimmer_motion.dart';
 import 'glimmer_surface.dart';
 import 'glimmer_theme.dart';
@@ -73,7 +74,6 @@ class GlimmerMenu<T> extends StatelessWidget {
     return ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth),
       child: GlimmerSurface(
-        depth: tokens.depth.level3,
         padding: EdgeInsets.all(spacing.small),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -87,15 +87,17 @@ class GlimmerMenu<T> extends StatelessWidget {
                   opacity: item.enabled ? 1 : 0.42,
                   child: GlimmerSurface(
                     borderRadius: tokens.shapes.small,
-                    // The rows sit inside the menu's own surface, so a selected
-                    // one is not on a new plane and does not take a shadow.
-                    liftOnFocus: false,
                     // A row adds no tint and no resting edge of its own. Glass
                     // over glass compounds: give every row a fill and the panel
                     // behind them disappears under a stack of lighter bars. The
                     // surface treatment arrives with focus and with a press,
                     // which is when it means something.
                     opacity: 0,
+                    // No blur either. A row that blurs samples the panel it is
+                    // sitting on, so every row gets its own slightly different
+                    // background and the panel reads as a stack of bands with
+                    // seams between them rather than as one surface.
+                    blur: 0,
                     borderColor: const Color(0x00000000),
                     focused: item.value == selected,
                     padding: EdgeInsets.symmetric(
@@ -237,8 +239,15 @@ class _GlimmerMenuRoute<T> extends PopupRoute<T> {
           gap: gap,
           opensDown: opensDown,
         ),
-        child: FadeTransition(
-          opacity: eased,
+        // The panel is glass, so it arrives through GlimmerEntrance rather
+        // than a FadeTransition: an opacity layer would leave it flat for the
+        // whole animation and then snap the backdrop in at the end.
+        child: AnimatedBuilder(
+          animation: eased,
+          builder: (context, child) => GlimmerEntrance(
+            progress: eased.value,
+            child: child!,
+          ),
           child: ScaleTransition(
             scale: Tween<double>(begin: 0.94, end: 1).animate(eased),
             alignment: opensDown ? Alignment.topCenter : Alignment.bottomCenter,

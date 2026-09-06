@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'glimmer_depth.dart';
 import 'glimmer_surface.dart';
 import 'glimmer_theme.dart';
 
@@ -37,7 +36,6 @@ class GlimmerCard extends StatelessWidget {
     this.focused = false,
     this.onTap,
     this.enableAmbientPulse = false,
-    this.depth,
     this.opacity,
     this.blur,
   }) : assert(
@@ -83,9 +81,6 @@ class GlimmerCard extends StatelessWidget {
   /// [GlimmerSurface.enableAmbientPulse] for why it is off by default.
   final bool enableAmbientPulse;
 
-  /// The resting depth level. Glimmer rests cards at level 1.
-  final GlimmerDepthLevel? depth;
-
   /// Overrides [GlimmerTokens.surfaceOpacity] for this card.
   ///
   /// Lower it for a card that should be mostly backdrop and lit edge.
@@ -104,7 +99,6 @@ class GlimmerCard extends StatelessWidget {
       focused: focused,
       onTap: onTap,
       enableAmbientPulse: enableAmbientPulse,
-      depth: depth ?? tokens.depth.level1,
       opacity: opacity,
       blur: blur,
       padding: padding ?? EdgeInsets.all(spacing.medium),

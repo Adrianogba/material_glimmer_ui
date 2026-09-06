@@ -18,7 +18,7 @@ import 'glimmer_overscroll.dart';
 /// edge the list ran into instead, with the same graded light the surfaces use
 /// on their own edges. It is painted over the content, so nothing is isolated.
 ///
-/// [GlimmerApp] installs this. Pass your own `scrollBehavior` to opt out.
+/// [MaterialGlimmerApp] installs this. Pass your own `scrollBehavior` to opt out.
 class GlimmerScrollBehavior extends MaterialScrollBehavior {
   /// Creates the Glimmer scroll behaviour.
   const GlimmerScrollBehavior();

@@ -13,19 +13,15 @@ class MaterialGlimmerGallery extends StatefulWidget {
 }
 
 class _MaterialGlimmerGalleryState extends State<MaterialGlimmerGallery> {
-  var _scale = GlimmerScale.mobile;
   var _mode = ThemeMode.dark;
 
   @override
   Widget build(BuildContext context) {
-    return GlimmerApp(
+    return MaterialGlimmerApp(
       title: 'Material Glimmer UI',
       debugShowCheckedModeBanner: false,
-      scale: _scale,
       themeMode: _mode,
       home: _GalleryHome(
-        scale: _scale,
-        onScaleChanged: (scale) => setState(() => _scale = scale),
         mode: _mode,
         onModeChanged: (mode) => setState(() => _mode = mode),
       ),
@@ -35,14 +31,10 @@ class _MaterialGlimmerGalleryState extends State<MaterialGlimmerGallery> {
 
 class _GalleryHome extends StatefulWidget {
   const _GalleryHome({
-    required this.scale,
-    required this.onScaleChanged,
     required this.mode,
     required this.onModeChanged,
   });
 
-  final GlimmerScale scale;
-  final ValueChanged<GlimmerScale> onScaleChanged;
   final ThemeMode mode;
   final ValueChanged<ThemeMode> onModeChanged;
 
@@ -58,12 +50,7 @@ class _GalleryHomeState extends State<_GalleryHome> {
     final pages = [
       const _OverviewPage(),
       const _ComponentsPage(),
-      _FoundationsPage(
-        scale: widget.scale,
-        onScaleChanged: widget.onScaleChanged,
-        mode: widget.mode,
-        onModeChanged: widget.onModeChanged,
-      ),
+      const _FoundationsPage(),
     ];
 
     return GlimmerScaffold(
@@ -87,7 +74,7 @@ class _GalleryHomeState extends State<_GalleryHome> {
           GlimmerIconButton(
             icon: Icons.auto_awesome,
             tooltip: 'About',
-            onPressed: () => showDialog<void>(
+            onPressed: () => showGlimmerDialog<void>(
               context: context,
               builder: (context) => const _AboutSheet(),
             ),
@@ -558,17 +545,7 @@ class _ComponentsPageState extends State<_ComponentsPage> {
 }
 
 class _FoundationsPage extends StatelessWidget {
-  const _FoundationsPage({
-    required this.scale,
-    required this.onScaleChanged,
-    required this.mode,
-    required this.onModeChanged,
-  });
-
-  final GlimmerScale scale;
-  final ValueChanged<GlimmerScale> onScaleChanged;
-  final ThemeMode mode;
-  final ValueChanged<ThemeMode> onModeChanged;
+  const _FoundationsPage();
 
   @override
   Widget build(BuildContext context) {
@@ -599,52 +576,6 @@ class _FoundationsPage extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.fromLTRB(spacing.large, 24, spacing.large, 24),
       children: [
-        const _SectionLabel('Ground'),
-        SizedBox(height: spacing.small),
-        Text(
-          'Glimmer is dark by necessity on a lens. On a phone it does not have '
-          'to be.',
-          style: type.caption.copyWith(color: colors.outline),
-        ),
-        SizedBox(height: spacing.medium),
-        GlimmerButtonGroup(
-          children: [
-            GlimmerToggleButton(
-              label: 'Dark',
-              selected: mode == ThemeMode.dark,
-              onChanged: (_) => onModeChanged(ThemeMode.dark),
-            ),
-            GlimmerToggleButton(
-              label: 'Light',
-              selected: mode == ThemeMode.light,
-              onChanged: (_) => onModeChanged(ThemeMode.light),
-            ),
-          ],
-        ),
-        SizedBox(height: spacing.extraLarge),
-
-        const _SectionLabel('Scale'),
-        SizedBox(height: spacing.small),
-        Text(
-          'The same tokens at two thirds, or at the published glasses sizes.',
-          style: type.caption.copyWith(color: colors.outline),
-        ),
-        SizedBox(height: spacing.medium),
-        GlimmerButtonGroup(
-          children: [
-            GlimmerToggleButton(
-              label: 'Mobile',
-              selected: scale == GlimmerScale.mobile,
-              onChanged: (_) => onScaleChanged(GlimmerScale.mobile),
-            ),
-            GlimmerToggleButton(
-              label: 'Glasses',
-              selected: scale == GlimmerScale.glasses,
-              onChanged: (_) => onScaleChanged(GlimmerScale.glasses),
-            ),
-          ],
-        ),
-        SizedBox(height: spacing.extraLarge),
         const _SectionLabel('Colour'),
         SizedBox(height: spacing.medium),
         Wrap(
@@ -685,47 +616,43 @@ class _FoundationsPage extends StatelessWidget {
         const _SectionLabel('Depth'),
         SizedBox(height: spacing.small),
         Text(
-          'Five levels, two black shadow layers each. Components rest flat and '
-          'take a level while focused.',
+          'Five levels, and none of them is a shadow. Glimmer says how high '
+          'something sits by taking the plane behind it away, so nothing casts '
+          'anything: a dialog at level 4 makes the app under it withdraw by '
+          'that much.',
           style: type.caption.copyWith(color: colors.outline),
         ),
         SizedBox(height: spacing.medium),
-        // The shadows are black, so on the black window colour they are
-        // invisible. They are shown over a gradient for the same reason the
-        // upstream depth reference is.
-        ClipRRect(
-          borderRadius: tokens.shapes.medium,
-          child: Stack(
+        for (var level = 1; level <= 5; level++) ...[
+          Row(
             children: [
-              const _Backdrop(),
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: spacing.large,
-                  vertical: spacing.extraLarge * 2,
-                ),
-                child: Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: spacing.extraLarge,
-                  runSpacing: spacing.extraLarge * 2,
-                  children: [
-                    for (var level = 1; level <= 5; level++)
-                      GlimmerSurface(
-                        depth: tokens.depth[level],
-                        padding: EdgeInsets.zero,
-                        child: SizedBox(
-                          width: 72,
-                          height: 64,
-                          child: Center(
-                            child: Text('+$level', style: type.titleSmall),
+              SizedBox(
+                width: 64,
+                child: Text('Level $level', style: type.caption),
+              ),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: tokens.shapes.small,
+                  child: SizedBox(
+                    height: 28,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        const _Backdrop(),
+                        ColoredBox(
+                          color: colors.background.withValues(
+                            alpha: tokens.depth[level].recede,
                           ),
                         ),
-                      ),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
-        ),
+          SizedBox(height: spacing.small),
+        ],
       ],
     );
   }
@@ -774,11 +701,9 @@ class _AboutSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = GlimmerTheme.of(context);
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: EdgeInsets.all(tokens.spacing.large),
+    return Padding(
+      padding: EdgeInsets.all(tokens.spacing.large),
       child: GlimmerSurface(
-        depth: tokens.depth.level4,
         additive: false,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -797,7 +722,8 @@ class _AboutSheet extends StatelessWidget {
               'A design system for Flutter: a theme, a full token set and a '
               'widget library, picked the way you pick Material or Cupertino. '
               'Surfaces are glass over whatever you put behind them, focus is '
-              'a lit edge, and depth is a real shadow.',
+              'a lit edge, and depth is the plane behind withdrawing rather '
+              'than a shadow in front.',
               style: tokens.typography.bodySmall,
             ),
             SizedBox(height: tokens.spacing.medium),

@@ -225,14 +225,6 @@ void main() {
       expect(find.text('ignored'), findsNothing);
     });
 
-    testWidgets('rests at depth level 1', (tester) async {
-      await tester.pumpWidget(host(const GlimmerCard(title: 'x')));
-      final surface = tester.widget<GlimmerSurface>(
-        find.byType(GlimmerSurface),
-      );
-      final expected = GlimmerDepth.mobile().level1;
-      expect(surface.depth!.layer1.blurRadius, expected.layer1.blurRadius);
-    });
   });
 
   group('GlimmerListItem and GlimmerList', () {
@@ -543,10 +535,10 @@ void main() {
     });
   });
 
-  group('GlimmerApp', () {
+  group('MaterialGlimmerApp', () {
     testWidgets('brings the Glimmer theme with it', (tester) async {
       await tester.pumpWidget(
-        GlimmerApp(
+        MaterialGlimmerApp(
           home: Builder(
             builder: (context) {
               final tokens = GlimmerTheme.of(context);
@@ -563,7 +555,7 @@ void main() {
     testWidgets('passes the theme knobs through', (tester) async {
       const custom = Color(0xFFB9F33D);
       await tester.pumpWidget(
-        GlimmerApp(
+        MaterialGlimmerApp(
           primary: custom,
           scale: GlimmerScale.glasses,
           home: Builder(
@@ -581,7 +573,7 @@ void main() {
 
     testWidgets('a single theme applies in both modes', (tester) async {
       await tester.pumpWidget(
-        GlimmerApp(
+        MaterialGlimmerApp(
           primary: const Color(0xFFB9F33D),
           theme: GlimmerTheme.dark(scale: GlimmerScale.glasses),
           home: Builder(
@@ -598,7 +590,7 @@ void main() {
 
     testWidgets('named routes navigate', (tester) async {
       await tester.pumpWidget(
-        GlimmerApp(
+        MaterialGlimmerApp(
           initialRoute: '/',
           routes: {
             '/': (context) => Builder(
@@ -626,7 +618,7 @@ void main() {
       late TextStyle style;
       late GlimmerTokens tokens;
       await tester.pumpWidget(
-        GlimmerApp(
+        MaterialGlimmerApp(
           home: GlimmerScaffold(
             title: 'Title',
             body: Builder(
@@ -652,7 +644,7 @@ void main() {
       final colors = GlimmerColors.standard();
 
       await tester.pumpWidget(
-        GlimmerApp(
+        MaterialGlimmerApp(
           home: GlimmerScaffold(
             body: Column(
               children: [
@@ -701,7 +693,7 @@ void main() {
           late IconThemeData iconTheme;
 
           await tester.pumpWidget(
-            GlimmerApp(
+            MaterialGlimmerApp(
               themeMode: brightness == Brightness.dark
                   ? ThemeMode.dark
                   : ThemeMode.light,
@@ -740,7 +732,7 @@ void main() {
         (tester) async {
       final colors = GlimmerColors.standard();
       await tester.pumpWidget(
-        GlimmerApp(
+        MaterialGlimmerApp(
           home: GlimmerScaffold(
             body: Column(
               children: [
@@ -771,12 +763,12 @@ void main() {
     // The overscroll stretch renders scrolling content into an offscreen layer,
     // and a surface that reads what is behind it finds nothing there, so every
     // glass panel goes opaque until the stretch ends.
-    testWidgets('GlimmerApp lights the edge instead of stretching',
+    testWidgets('MaterialGlimmerApp lights the edge instead of stretching',
         (tester) async {
       late Widget indicator;
 
       await tester.pumpWidget(
-        GlimmerApp(
+        MaterialGlimmerApp(
           home: Builder(
             builder: (context) {
               indicator =
@@ -803,7 +795,7 @@ void main() {
     testWidgets('a caller can put the stretch back', (tester) async {
       late ScrollBehavior behavior;
       await tester.pumpWidget(
-        GlimmerApp(
+        MaterialGlimmerApp(
           scrollBehavior: const MaterialScrollBehavior(),
           home: Builder(
             builder: (context) {
@@ -818,30 +810,98 @@ void main() {
   });
 
   group('depth', () {
-    testWidgets('a nested surface does not lift on focus', (tester) async {
+    // The surface used to absorb touches only as a side effect of the shadow
+    // painter sitting behind it. With the shadows gone, a tap on the blank part
+    // of a dialog fell straight through to the scrim and dismissed it.
+    testWidgets('a tap on the blank part of a dialog does not dismiss it',
+        (tester) async {
       await tester.pumpWidget(
-        const GlimmerApp(
+        MaterialGlimmerApp(
           home: GlimmerScaffold(
-            body: Column(
-              children: [
-                GlimmerSurface(
-                  focused: true,
-                  liftOnFocus: false,
-                  child: Text('nested'),
+            body: Builder(
+              builder: (context) => GlimmerButton(
+                label: 'Open',
+                onPressed: () => showGlimmerDialog<void>(
+                  context: context,
+                  builder: (context) => const GlimmerDialog(
+                    title: 'Leave the queue?',
+                    content: 'You will lose your place.',
+                  ),
                 ),
-                GlimmerSurface(focused: true, child: Text('standalone')),
-              ],
+              ),
             ),
           ),
         ),
       );
+
+      await tester.tap(find.text('Open'));
       await tester.pumpAndSettle();
 
-      final surfaces = tester
-          .widgetList<GlimmerSurface>(find.byType(GlimmerSurface))
-          .toList();
-      expect(surfaces.first.liftOnFocus, isFalse);
-      expect(surfaces.last.liftOnFocus, isTrue);
+      // The right edge of the pane itself, inside it but clear of every label.
+      final panel = tester.getRect(
+        find.descendant(
+          of: find.byType(GlimmerDialog),
+          matching: find.byType(GlimmerSurface),
+        ),
+      );
+      await tester.tapAt(Offset(panel.right - 4, panel.center.dy));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Leave the queue?'), findsOneWidget);
+
+      // The scrim outside it still dismisses.
+      await tester.tapAt(const Offset(8, 8));
+      await tester.pumpAndSettle();
+      expect(find.text('Leave the queue?'), findsNothing);
+    });
+
+
+    // Glimmer's depth is the plane behind withdrawing, not a shadow around the
+    // thing in front. Nothing paints one, so a modal spends its level on the
+    // scrim and the panel itself carries none.
+    testWidgets('a modal scrim withdraws the app by its depth level',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: Builder(
+              builder: (context) => GlimmerButton(
+                label: 'Open',
+                onPressed: () => showGlimmerDialog<void>(
+                  context: context,
+                  builder: (context) => const GlimmerDialog(title: 'Hello'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      final scrim = tester.widget<GlimmerModalScrim>(
+        find.byType(GlimmerModalScrim),
+      );
+      expect(scrim.depth!.recede, GlimmerDepth.standard().level4.recede);
+
+      final tokens = GlimmerTokens.forScale(GlimmerScale.mobile);
+      final box = tester.widget<DecoratedBox>(
+        find.descendant(
+          of: find.byType(GlimmerModalScrim),
+          matching: find.byType(DecoratedBox),
+        ),
+      );
+      final fill = (box.decoration as BoxDecoration).color!;
+
+      // The ground colour, not black. On a light theme a black wash is a
+      // bruise, and withdrawing means the plane stops being drawn rather than
+      // being covered over.
+      expect(
+        fill.toARGB32() & 0x00FFFFFF,
+        tokens.colors.background.toARGB32() & 0x00FFFFFF,
+      );
+      expect(fill.a, closeTo(tokens.depth.level4.recede, 1e-6));
     });
   });
 
@@ -1006,7 +1066,7 @@ void main() {
       final key = GlobalKey();
 
       await tester.pumpWidget(
-        GlimmerApp(
+        MaterialGlimmerApp(
           home: GlimmerScaffold(
             body: RepaintBoundary(
               key: key,
@@ -1060,7 +1120,7 @@ void main() {
     testWidgets('a dialog opens, returns a value and closes', (tester) async {
       int? result;
       await tester.pumpWidget(
-        GlimmerApp(
+        MaterialGlimmerApp(
           home: GlimmerScaffold(
             body: Builder(
               builder: (context) => GlimmerButton(
@@ -1104,7 +1164,7 @@ void main() {
     testWidgets('tapping the scrim dismisses a dismissible dialog',
         (tester) async {
       await tester.pumpWidget(
-        GlimmerApp(
+        MaterialGlimmerApp(
           home: GlimmerScaffold(
             body: Builder(
               builder: (context) => GlimmerButton(
@@ -1130,7 +1190,7 @@ void main() {
 
     testWidgets('a non-dismissible dialog ignores the scrim', (tester) async {
       await tester.pumpWidget(
-        GlimmerApp(
+        MaterialGlimmerApp(
           home: GlimmerScaffold(
             body: Builder(
               builder: (context) => GlimmerButton(
@@ -1155,7 +1215,7 @@ void main() {
 
     testWidgets('a bottom sheet opens and drags away', (tester) async {
       await tester.pumpWidget(
-        GlimmerApp(
+        MaterialGlimmerApp(
           home: GlimmerScaffold(
             body: Builder(
               builder: (context) => GlimmerButton(
@@ -1192,7 +1252,7 @@ void main() {
         (tester) async {
       var acted = false;
       await tester.pumpWidget(
-        GlimmerApp(
+        MaterialGlimmerApp(
           home: GlimmerScaffold(
             body: Builder(
               builder: (context) => GlimmerButton(
@@ -1224,7 +1284,7 @@ void main() {
     testWidgets('a second message replaces the first', (tester) async {
       late BuildContext ctx;
       await tester.pumpWidget(
-        GlimmerApp(
+        MaterialGlimmerApp(
           home: GlimmerScaffold(
             body: Builder(
               builder: (context) {
@@ -1258,7 +1318,7 @@ void main() {
         (tester) async {
       String? chosen;
       await tester.pumpWidget(
-        GlimmerApp(
+        MaterialGlimmerApp(
           home: GlimmerScaffold(
             body: Center(
               child: Builder(
@@ -1298,7 +1358,7 @@ void main() {
     testWidgets('a disabled item cannot be chosen', (tester) async {
       var closed = false;
       await tester.pumpWidget(
-        GlimmerApp(
+        MaterialGlimmerApp(
           home: GlimmerScaffold(
             body: Center(
               child: Builder(
@@ -1347,7 +1407,7 @@ void main() {
       late TextStyle style;
 
       await tester.pumpWidget(
-        GlimmerApp(
+        MaterialGlimmerApp(
           home: GlimmerScaffold(
             body: Builder(
               builder: (context) => GlimmerButton(
@@ -1405,7 +1465,7 @@ void main() {
         (tester) async {
       late TextStyle style;
       await tester.pumpWidget(
-        GlimmerApp(
+        MaterialGlimmerApp(
           home: GlimmerSurface(
             child: Builder(
               builder: (context) {
@@ -1515,7 +1575,7 @@ void main() {
   group('overscroll', () {
     testWidgets('lights the edge without moving the content', (tester) async {
       await tester.pumpWidget(
-        GlimmerApp(
+        MaterialGlimmerApp(
           home: GlimmerScaffold(
             body: ListView.builder(
               itemCount: 4,
@@ -1538,6 +1598,115 @@ void main() {
 
       await gesture.up();
       await tester.pumpAndSettle();
+    });
+  });
+
+  group('entrance', () {
+    // Glass cannot be faded. An opacity layer takes the backdrop away for the
+    // whole animation and hands it back in one frame at the end, which is the
+    // jump at the end of a menu opening. Surfaces arrive through
+    // GlimmerEntrance instead, and nothing on the way in is an opacity layer.
+    testWidgets('a surface scales its own tint rather than being faded',
+        (tester) async {
+      Widget probe(double progress) => MaterialGlimmerApp(
+            home: GlimmerScaffold(
+              body: GlimmerEntrance(
+                progress: progress,
+                child: const GlimmerSurface(child: Text('panel')),
+              ),
+            ),
+          );
+
+      await tester.pumpWidget(probe(1));
+      await tester.pumpAndSettle();
+      final full = tester.widget<Opacity>(
+        find.descendant(
+          of: find.byType(GlimmerSurface),
+          matching: find.byType(Opacity),
+        ),
+      );
+      expect(full.opacity, 1);
+
+      await tester.pumpWidget(probe(0.4));
+      await tester.pumpAndSettle();
+      final part = tester.widget<Opacity>(
+        find.descendant(
+          of: find.byType(GlimmerSurface),
+          matching: find.byType(Opacity),
+        ),
+      );
+      expect(part.opacity, closeTo(0.4, 1e-9));
+
+      // The fade is inside the surface, under its backdrop filter, so the
+      // backdrop is still being read.
+      expect(
+        find.ancestor(
+          of: find.byType(BackdropFilter),
+          matching: find.byType(Opacity),
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets('no modal wraps its panel in an opacity layer', (tester) async {
+      Future<void> check(
+        Future<void> Function(BuildContext context) open,
+        Type panel,
+      ) async {
+        await tester.pumpWidget(
+          MaterialGlimmerApp(
+            home: GlimmerScaffold(
+              body: Builder(
+                builder: (context) => GlimmerButton(
+                  label: 'Open',
+                  onPressed: () => open(context),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        await tester.tap(find.text('Open'));
+        // Part way in, which is where an opacity layer would exist.
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 120));
+
+        expect(
+          find.ancestor(
+            of: find.byType(panel),
+            matching: find.byType(FadeTransition),
+          ),
+          findsNothing,
+          reason: '$panel is faded, which flattens its glass',
+        );
+        expect(
+          find.ancestor(
+            of: find.byType(panel),
+            matching: find.byType(GlimmerEntrance),
+          ),
+          findsWidgets,
+        );
+
+        await tester.pumpAndSettle();
+        await tester.tapAt(const Offset(20, 20));
+        await tester.pumpAndSettle();
+      }
+
+      await check(
+        (context) => showGlimmerDialog<void>(
+          context: context,
+          builder: (context) => const GlimmerDialog(title: 'Hello'),
+        ),
+        GlimmerDialog,
+      );
+
+      await check(
+        (context) => showGlimmerBottomSheet<void>(
+          context: context,
+          builder: (context) => const GlimmerBottomSheet(child: Text('sheet')),
+        ),
+        GlimmerBottomSheet,
+      );
     });
   });
 }

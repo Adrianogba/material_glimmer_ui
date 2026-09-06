@@ -33,7 +33,7 @@ under Apache 2.0, and this package is MIT.
 | `IconButton` | `GlimmerIconButton` | 48 minimum size, `small` padding |
 | `GlimmerHorizontalPager` | `GlimmerPager` | 0.9 minimum scale, 0.69 scale threshold, 0.82 blur threshold, 2 blur, bottom transform origin, 50 edge scrim with its 0.05/0.35/0.65/0.95 envelope |
 | `PageIndicator` | `GlimmerPageIndicator` | 6 radius, 27 centre to centre, 18 selected bar, 7 maximum, 8/12 edge fraction, 0.3 unselected alpha |
-| `Stack` | `GlimmerStack` | 18 reveal, 0.94 next-item scale, `#4F4F4F` wash to 0.5, `dstOut` erase, two items behind, snap spring |
+| `Stack` | `GlimmerStack` | 18 reveal, 0.94 next-item scale, recede to 0.5, two items behind, snap spring |
 | `Scrim` | `GlimmerScrim` | erases with `dstOut` over 48, rather than painting the background colour |
 | `VoiceInputIndicator` | `GlimmerVoiceInputIndicator` | 32 container, 6 dot, 5x middle bar, 4.2 side offset, 3 spacing |
 
@@ -41,15 +41,14 @@ under Apache 2.0, and this package is MIT.
 
 | What | Upstream | Here | Why |
 |---|---|---|---|
-| Type, radii, icon sizes, shadow geometry | glasses sizes | two thirds | The published sizes come from the 0.6 degree legibility floor of a lens centimetres from the eye. `GlimmerScale.glasses` opts out. |
+| Type, radii, icon sizes | glasses sizes | two thirds | The published sizes come from the 0.6 degree legibility floor of a lens centimetres from the eye. `GlimmerScale.glasses` opts out. |
 | Minimum touch heights | 48, 72, 44, 80 | unchanged, except list items at 64 | These are touch targets, not visual measurements, so they do not follow the two-thirds rule. An 80 row is unusually tall for a phone list. |
-| Shadow alpha | 0.9 and 1.0 | 55% of that on dark, 12% on light | The published alphas assume a pure black ground where a black shadow nearly vanishes. Over a backdrop they are a halo; on a light ground, a bruise. |
+| Depth | two black shadows drawn around the component | nothing drawn around it; the plane behind withdraws instead, by a ratio taken from the published spreads | Black is transparent on the glasses, so those shadows are a hole rather than a halo. Painted on an opaque screen they are a dark halo, which is Material's language, and on a light ground a bruise. |
 | Surface tint strength | opaque | 0.72 dark, 0.66 light | An opaque fill over a backdrop reads as a slab. Applies to the surface role only; a caller-supplied fill keeps full strength. |
 | Border shader | AGSL runtime shader, Android 13+ | sampled `SweepGradient` | Runs on every platform Flutter does. Same maths, including the square-normalised angle so the corners land on the component's real corners. |
 | Progressive border blur | per-pixel in the shader | two strokes, soft under sharp | A single stroke cannot vary its blur along its own length. |
 | `withTone` | HCT, with a CAM16 gamut solve | CIELAB L\*, keeping a\* and b\* | Tone is defined as L\* and `HctUtils` uses the same Epsilon and Kappa. The gamut solve is not reproduced; colours pushed out of sRGB are clamped per channel instead. The shifts Glimmer actually performs are small enough that the two agree. |
 | Overscroll | not applicable | a lit edge, never a stretch or a bounce | The stretch renders scrolling content into an offscreen layer, which leaves a surface with no backdrop to read and flattens every glass panel on screen. A stretch is also Material's gesture and a bounce is Cupertino's. |
-| Drop shadows | drawn behind the component | clipped to outside its shape | A glass surface reads what is painted behind it, so a shadow left underneath is blurred into the surface's own fill and washes it black. |
 | Focus | roving, follows the wearer | driven by selection and keyboard focus | A phone has no gaze or touchpad. |
 
 ## Deliberately not translated
@@ -68,29 +67,43 @@ rendered as nothing at all. So a Glimmer shadow does not darken what is under
 it, it *removes* it: the surface behind stops being drawn where the surface in
 front approaches, and the world shows through the gap.
 
-That is why the stack erases the item behind with `BlendMode.dstOut` and washes
-it with `#4F4F4F` rather than fading it to black, and why `GlimmerScrim` takes
-the content's own alpha down instead of painting the background colour over it.
-Opacity and a black overlay look equivalent on a flat page and are visibly wrong
-over a backdrop.
+That is why an item behind the top of a stack recedes rather than darkening, and
+why `GlimmerScrim` takes the content's own alpha down instead of painting the
+background colour over it. Opacity and a black overlay look equivalent on a flat
+page and are visibly wrong over a backdrop.
 
-The surfaces themselves keep real shadows. On a phone the app behind a card is
-opaque, so there is nothing to reveal by erasing, and a shadow is the closest
-honest equivalent. Their alphas are pulled well down from the published ones for
-the same reason.
+The recede has to come from inside the surface. Any layer wrapped around glass
+takes away the backdrop it reads: an opacity, a colour filter or a shader mask
+leaves the card flat for the whole animation, snaps it back at the end, and
+shows its own bounds as a rectangle across the page. `GlimmerEntrance` carries
+the progress down instead, and each surface scales its own tint, blur and edge
+by it.
+
+Nothing is painted around a surface to say how high it sits. A `GlimmerDepthLevel`
+is a number saying how far the plane behind withdraws, and it is spent by whatever
+owns both planes: `GlimmerStack` for a stack, `GlimmerModalScrim` for a modal,
+where the app is blurred and taken back toward the ground colour rather than
+washed with black. On a phone the app behind a card is opaque, so withdrawing
+means falling back to whatever the screen is made of, which is also why it works
+in a light theme where a black wash is a bruise.
+
+One consequence is easy to miss: with the shadows gone, a surface no longer
+absorbs touches as a side effect of the painter behind it, so it absorbs them
+deliberately. Without that, a tap on the blank part of a dialog falls through to
+the scrim and dismisses it.
 
 ## Added for mobile
 
 Glimmer has none of these, because a glasses app shows one thing at a time and
 is dismissed with the back gesture. Each is derived from the tokens rather than
-borrowed from Material: the scrim's 50% comes from the scrim Glimmer puts over
-the items behind the top of a stack, and the panels are surfaces at depth levels
-3 and 4.
+borrowed from Material: a dialog withdraws the app behind it by depth level 4
+and a sheet by level 3, the same levels the panels would have sat at.
 
 `showGlimmerDialog` · `showGlimmerBottomSheet` · `showGlimmerSnackbar` ·
 `showGlimmerMenu` · `GlimmerScaffold` · `GlimmerTopBar` · `GlimmerTextField` ·
 `GlimmerSwitch` · `GlimmerSlider` · `GlimmerProgressBar` · `GlimmerBackdrop` ·
-`GlimmerScrollBehavior` · `GlimmerOverscrollIndicator` · `GlimmerApp`
+`GlimmerScrollBehavior` · `GlimmerOverscrollIndicator` · `MaterialGlimmerApp` ·
+`GlimmerEntrance`
 
 ## Not translated yet
 

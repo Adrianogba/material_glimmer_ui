@@ -3,31 +3,38 @@ import 'dart:ui' as ui show ImageFilter;
 import 'package:flutter/material.dart';
 
 import 'glimmer_button.dart';
+import 'glimmer_depth.dart';
+import 'glimmer_entrance.dart';
 import 'glimmer_motion.dart';
 import 'glimmer_surface.dart';
 import 'glimmer_theme.dart';
 
-/// The veil drawn over the app while a modal surface is open.
+/// How far the app withdraws while a modal surface is open.
 ///
-/// It blurs what is behind it as well as darkening it. That is the point:
-/// Glimmer's surfaces are glass, so a flat black wash over the app would make
-/// the panel on top read as a sticker rather than as a pane held in front of
-/// something. Blurring the app is also what tells the eye which layer to read.
-///
-/// Glimmer has no modals, so the numbers come from the nearest thing it does
-/// have: the scrim over the items behind the top of a stack, at 50%.
+/// This is where a Glimmer depth level is spent. Nothing is painted around the
+/// panel to say it is in front; the plane behind it stops being fully drawn
+/// instead, blurred and taken back toward the ground colour by
+/// [GlimmerDepthLevel.recede]. That is what the published black shadows do on
+/// hardware where black is transparent, said in a way that also works on an
+/// opaque screen and in a light theme, where a black wash is a bruise.
 class GlimmerModalScrim extends StatelessWidget {
   /// Creates a modal scrim.
   const GlimmerModalScrim({
     super.key,
     required this.progress,
+    this.depth,
     this.onDismiss,
     this.semanticLabel,
   });
 
-  /// How far in the modal is, from 0 to 1. The blur and the veil both follow
-  /// it, so the app recedes as the panel arrives.
+  /// How far in the modal is, from 0 to 1. The blur and the withdrawal both
+  /// follow it, so the app recedes as the panel arrives.
   final double progress;
+
+  /// How far the app withdraws once the modal is fully in.
+  ///
+  /// Defaults to [GlimmerDepth.level4], the level a dialog sits at.
+  final GlimmerDepthLevel? depth;
 
   /// Called when the scrim is tapped. Null makes the modal non-dismissible.
   final VoidCallback? onDismiss;
@@ -37,14 +44,16 @@ class GlimmerModalScrim extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = GlimmerTheme.of(context);
     final t = progress.clamp(0.0, 1.0);
     final blur = GlimmerMotion.scrimBlur * t;
+    final recede = (depth ?? tokens.depth.level4).recede;
 
+    // The ground colour, not black. Withdrawing means the plane behind stops
+    // being drawn, so what is left is whatever the screen is made of.
     Widget scrim = DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFF000000).withValues(
-          alpha: GlimmerMotion.scrimOpacity * t,
-        ),
+        color: tokens.colors.background.withValues(alpha: recede * t),
       ),
       child: const SizedBox.expand(),
     );
@@ -77,7 +86,7 @@ class GlimmerModalScrim extends StatelessWidget {
 ///
 /// Glimmer has no dialog. Display glasses show one thing at a time, so a panel
 /// interrupting another panel has nowhere to go. A phone app needs one, and the
-/// pieces to build it are all here: a surface at a high depth level over a
+/// pieces to build it are all here: a surface over a
 /// blurred app is exactly what the design language says "this, not that" with.
 class GlimmerDialog extends StatelessWidget {
   /// Creates a dialog panel.
@@ -119,9 +128,6 @@ class GlimmerDialog extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
         child: GlimmerSurface(
-          // A dialog is the front-most thing on screen, so it takes the depth
-          // level that says so rather than the one a card rests at.
-          depth: tokens.depth.level4,
           padding: EdgeInsets.all(spacing.large),
           child: child ?? _slots(context, tokens),
         ),
@@ -194,7 +200,6 @@ class GlimmerBottomSheet extends StatelessWidget {
         spacing.large,
       ),
       child: GlimmerSurface(
-        depth: tokens.depth.level3,
         padding: EdgeInsets.all(spacing.large),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -272,18 +277,21 @@ Future<T?> showGlimmerDialog<T>({
       );
       return _ModalLayer(
         progress: eased,
+        // A dialog is the front-most thing on screen, so the app behind it
+        // withdraws by the level that says so.
+        depth: GlimmerTheme.of(context).depth.level4,
         onDismiss:
             barrierDismissible ? () => Navigator.of(context).maybePop() : null,
         barrierLabel: barrierLabel,
         alignment: Alignment.center,
-        child: FadeTransition(
-          opacity: eased,
-          child: ScaleTransition(
-            // A dialog arrives by settling into place rather than by growing
-            // from nothing, so it starts close to its final size.
-            scale: Tween<double>(begin: 0.94, end: 1).animate(eased),
-            child: child,
-          ),
+        // No FadeTransition here. The panel is glass, and an opacity layer
+        // takes its backdrop away for the whole animation and hands it back in
+        // one frame at the end. GlimmerEntrance brings it in without a layer.
+        child: ScaleTransition(
+          // A dialog arrives by settling into place rather than by growing
+          // from nothing, so it starts close to its final size.
+          scale: Tween<double>(begin: 0.94, end: 1).animate(eased),
+          child: child,
         ),
       );
     },
@@ -316,6 +324,8 @@ Future<T?> showGlimmerBottomSheet<T>({
       );
       return _ModalLayer(
         progress: eased,
+        // A sheet leaves more of the app readable than a dialog does.
+        depth: GlimmerTheme.of(context).depth.level3,
         onDismiss:
             barrierDismissible ? () => Navigator.of(context).maybePop() : null,
         barrierLabel: barrierLabel,
@@ -339,9 +349,11 @@ class _ModalLayer extends StatelessWidget {
     required this.child,
     required this.alignment,
     required this.barrierLabel,
+    this.depth,
     this.onDismiss,
   });
 
+  final GlimmerDepthLevel? depth;
   final Animation<double> progress;
   final Widget child;
   final Alignment alignment;
@@ -358,6 +370,7 @@ class _ModalLayer extends StatelessWidget {
             Positioned.fill(
               child: GlimmerModalScrim(
                 progress: progress.value,
+                depth: depth,
                 onDismiss: onDismiss,
                 semanticLabel: barrierLabel,
               ),
@@ -370,7 +383,10 @@ class _ModalLayer extends StatelessWidget {
                 // text style is its error style.
                 child: Material(
                   type: MaterialType.transparency,
-                  child: Align(alignment: alignment, child: panel),
+                  child: GlimmerEntrance(
+                    progress: progress.value,
+                    child: Align(alignment: alignment, child: panel),
+                  ),
                 ),
               ),
             ),

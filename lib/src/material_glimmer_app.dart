@@ -10,7 +10,7 @@ import 'glimmer_theme.dart';
 ///
 /// ```dart
 /// void main() => runApp(
-///   const GlimmerApp(
+///   const MaterialGlimmerApp(
 ///     title: 'Bakery',
 ///     home: HomeScreen(),
 ///   ),
@@ -29,9 +29,9 @@ import 'glimmer_theme.dart';
 ///
 /// Pass [theme] to take over the theme entirely. The [primary], [scale],
 /// [fontFamily] and [additive] arguments are ignored when you do.
-class GlimmerApp extends StatelessWidget {
+class MaterialGlimmerApp extends StatelessWidget {
   /// Creates a Glimmer app using the [Navigator] API.
-  const GlimmerApp({
+  const MaterialGlimmerApp({
     super.key,
     this.navigatorKey,
     this.home,
@@ -70,7 +70,7 @@ class GlimmerApp extends StatelessWidget {
         _isRouter = false;
 
   /// Creates a Glimmer app using the Router API, for `go_router` and friends.
-  const GlimmerApp.router({
+  const MaterialGlimmerApp.router({
     super.key,
     this.routeInformationProvider,
     this.routeInformationParser,

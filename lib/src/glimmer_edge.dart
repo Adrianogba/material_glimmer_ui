@@ -40,6 +40,19 @@ class GlimmerEdge {
         bottomRight = const Color(0x66292929),
         bottomLeft = const Color(0xB37D7D7D);
 
+  /// The resting edge on a light ground.
+  ///
+  /// The published corners are pale greys, which is right against black and
+  /// wrong against white: the far corner is the brightest of the four, and on a
+  /// light background it lands as a white smear along the bottom of every
+  /// component. Light still comes from the top-left, so the highlight stays
+  /// there and the rest of the ring becomes shade instead of glare.
+  const GlimmerEdge.idleLight()
+      : topLeft = const Color(0xE6FFFFFF),
+        topRight = const Color(0x1A101418),
+        bottomRight = const Color(0x2E101418),
+        bottomLeft = const Color(0x20101418);
+
   /// The focused edge, derived from [focal].
   ///
   /// White at the lit corner, then the focal colour at tones 85, 69 and 77.
@@ -94,6 +107,20 @@ class GlimmerEdge {
         bottomRight: Color.lerp(a.bottomRight, b.bottomRight, t)!,
         bottomLeft: Color.lerp(a.bottomLeft, b.bottomLeft, t)!,
       );
+
+  /// Every corner at [t] of its own alpha.
+  ///
+  /// Used to bring an edge in without an opacity layer, which a glass surface
+  /// cannot survive.
+  GlimmerEdge scaleAlpha(double t) {
+    if (t >= 1) return this;
+    return GlimmerEdge(
+      topLeft: topLeft.withValues(alpha: topLeft.a * t),
+      topRight: topRight.withValues(alpha: topRight.a * t),
+      bottomRight: bottomRight.withValues(alpha: bottomRight.a * t),
+      bottomLeft: bottomLeft.withValues(alpha: bottomLeft.a * t),
+    );
+  }
 
   /// Mixes every corner toward [color] by [t].
   GlimmerEdge blendToward(Color color, double t) {

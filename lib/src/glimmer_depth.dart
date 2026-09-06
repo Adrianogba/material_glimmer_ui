@@ -2,50 +2,55 @@ import 'package:flutter/widgets.dart';
 
 /// One of Glimmer's five depth levels.
 ///
-/// Glimmer expresses z-order with shadows rather than Material's elevation
-/// overlay. Each level is two stacked black shadows: a wide, soft base layer at
-/// 90% alpha and a tighter opaque layer drawn on top of it. Neither layer is
-/// offset, so the shadow spreads evenly around the component.
+/// Upstream a level is two stacked black shadows drawn around a component. That
+/// works on the hardware Glimmer was drawn for, where black is not a colour but
+/// the absence of one: the shadow is a hole rather than a dark halo, and what
+/// it reads as is the layer behind being taken away near the thing in front.
 ///
-/// Most components rest with no depth at all and only take a level while
-/// focused, which is what makes focus read as the surface lifting toward the
-/// viewer.
+/// A phone screen is opaque, so painting the same two shadows gives a dark
+/// halo, which is Material's language rather than Glimmer's. Here a level says
+/// how far the plane behind withdraws instead, and nothing at all is painted
+/// around a surface. The ratios between the levels are the published spreads,
+/// so the five levels stay as far apart as they are upstream.
 @immutable
 class GlimmerDepthLevel {
-  /// Creates a depth level from its two shadow layers.
-  const GlimmerDepthLevel(this.layer1, this.layer2);
+  /// Creates a depth level from how far the plane behind withdraws.
+  const GlimmerDepthLevel(this.recede) : assert(recede >= 0 && recede <= 1);
 
-  /// The wide base shadow, drawn first.
-  final BoxShadow layer1;
-
-  /// The tighter shadow, drawn on top of [layer1].
-  final BoxShadow layer2;
-
-  /// The two layers in draw order, ready for [BoxDecoration.boxShadow].
-  List<BoxShadow> get shadows => [layer1, layer2];
+  /// How far the plane behind a surface at this level withdraws, from 0 to 1.
+  ///
+  /// 0 leaves it fully present. 1 takes it away entirely.
+  final double recede;
 
   /// Linearly interpolates between two levels.
   ///
-  /// A null level is treated as no shadow, so focus can animate from flat to
-  /// lifted.
-  static List<BoxShadow> lerp(
-    GlimmerDepthLevel? a,
-    GlimmerDepthLevel? b,
-    double t,
-  ) {
-    if (t <= 0) return a?.shadows ?? const <BoxShadow>[];
-    if (t >= 1) return b?.shadows ?? const <BoxShadow>[];
-    final from = a?.shadows ?? const <BoxShadow>[];
-    final to = b?.shadows ?? const <BoxShadow>[];
-    return BoxShadow.lerpList(from, to, t) ?? const <BoxShadow>[];
+  /// A null level is treated as no depth, so a component can animate from flat
+  /// to lifted.
+  static double lerp(GlimmerDepthLevel? a, GlimmerDepthLevel? b, double t) {
+    final from = a?.recede ?? 0;
+    final to = b?.recede ?? 0;
+    if (t <= 0) return from;
+    if (t >= 1) return to;
+    return from + ((to - from) * t);
   }
+
+  @override
+  bool operator ==(Object other) =>
+      other is GlimmerDepthLevel && other.recede == recede;
+
+  @override
+  int get hashCode => recede.hashCode;
+
+  @override
+  String toString() => 'GlimmerDepthLevel($recede)';
 }
 
 /// The five Glimmer depth levels, from the lowest to the highest z-order.
 ///
-/// [GlimmerDepth.glasses] carries the published radii and spreads verbatim.
-/// [GlimmerDepth.mobile] scales the geometry by two thirds, matching the type
-/// and shape scales, and leaves the alphas alone.
+/// The levels are spaced by the published shadow spreads, 6, 13, 19, 26 and 32,
+/// normalised against the largest and taken up to [maxRecede]. Depth is not a
+/// measurement of anything on screen, so unlike type, radii and icon sizes it
+/// is the same at both [GlimmerScale] settings.
 @immutable
 class GlimmerDepth {
   /// Creates a depth scale with every level given explicitly.
@@ -57,46 +62,19 @@ class GlimmerDepth {
     required this.level5,
   });
 
-  /// The published Glimmer depth levels, in glasses sizes.
+  /// The five levels, spaced by the published shadow spreads.
   ///
-  /// [opacity] scales how strongly the shadows read. The published alphas
-  /// assume a pure black ground, where a hard black shadow is almost invisible
-  /// and only its outer edge does any work. Over a backdrop it is a dark halo
-  /// instead, and on a light ground it is a bruise, so a theme scales them.
-  factory GlimmerDepth.glasses({double opacity = 1}) =>
-      GlimmerDepth._scaled(1, opacity);
-
-  /// The glasses depth levels with their radii and spreads at two thirds.
-  factory GlimmerDepth.mobile({double opacity = 1}) =>
-      GlimmerDepth._scaled(2 / 3, opacity);
-
-  factory GlimmerDepth._scaled(double scale, double opacity) {
-    GlimmerDepthLevel level(
-      double radius1,
-      double spread1,
-      double radius2,
-      double spread2,
-    ) {
-      return GlimmerDepthLevel(
-        BoxShadow(
-          color: const Color(0xFF000000).withValues(alpha: 0.9 * opacity),
-          blurRadius: radius1 * scale,
-          spreadRadius: spread1 * scale,
-        ),
-        BoxShadow(
-          color: const Color(0xFF000000).withValues(alpha: opacity),
-          blurRadius: radius2 * scale,
-          spreadRadius: spread2 * scale,
-        ),
-      );
-    }
-
+  /// [maxRecede] is how far the plane behind the front-most level withdraws.
+  factory GlimmerDepth.standard({double maxRecede = 0.6}) {
+    const spreads = [6.0, 13.0, 19.0, 26.0, 32.0];
+    GlimmerDepthLevel level(int i) =>
+        GlimmerDepthLevel((spreads[i] / spreads.last) * maxRecede);
     return GlimmerDepth(
-      level1: level(12, 6, 6, 2),
-      level2: level(23, 13, 8, 5),
-      level3: level(34, 19, 9, 7),
-      level4: level(45, 26, 11, 10),
-      level5: level(56, 32, 12, 12),
+      level1: level(0),
+      level2: level(1),
+      level3: level(2),
+      level4: level(3),
+      level5: level(4),
     );
   }
 
@@ -136,12 +114,8 @@ class GlimmerDepth {
 
   /// Linearly interpolates between two depth scales.
   static GlimmerDepth lerp(GlimmerDepth a, GlimmerDepth b, double t) {
-    GlimmerDepthLevel level(GlimmerDepthLevel x, GlimmerDepthLevel y) {
-      return GlimmerDepthLevel(
-        BoxShadow.lerp(x.layer1, y.layer1, t)!,
-        BoxShadow.lerp(x.layer2, y.layer2, t)!,
-      );
-    }
+    GlimmerDepthLevel level(GlimmerDepthLevel x, GlimmerDepthLevel y) =>
+        GlimmerDepthLevel(GlimmerDepthLevel.lerp(x, y, t));
 
     return GlimmerDepth(
       level1: level(a.level1, b.level1),
