@@ -771,7 +771,8 @@ void main() {
     // The overscroll stretch renders scrolling content into an offscreen layer,
     // and a surface that reads what is behind it finds nothing there, so every
     // glass panel goes opaque until the stretch ends.
-    testWidgets('GlimmerApp glows instead of stretching', (tester) async {
+    testWidgets('GlimmerApp lights the edge instead of stretching',
+        (tester) async {
       late Widget indicator;
 
       await tester.pumpWidget(
@@ -791,10 +792,12 @@ void main() {
       );
 
       // The stretch transforms the content into its own layer, which is what
-      // makes every glass surface go flat while it lasts. A glow is painted
-      // over the content instead, so nothing is isolated.
-      expect(indicator, isA<GlowingOverscrollIndicator>());
+      // makes every glass surface go flat while it lasts. Glimmer's own
+      // indicator paints over the content instead, so nothing is isolated, and
+      // it is neither Material's stretch nor Cupertino's bounce.
+      expect(indicator, isA<GlimmerOverscrollIndicator>());
       expect(indicator, isNot(isA<StretchingOverscrollIndicator>()));
+      expect(indicator, isNot(isA<GlowingOverscrollIndicator>()));
     });
 
     testWidgets('a caller can put the stretch back', (tester) async {
@@ -1050,6 +1053,491 @@ void main() {
         greaterThanOrEqualTo(outside),
         reason: 'the surface is darker than the backdrop behind it',
       );
+    });
+  });
+
+  group('modals', () {
+    testWidgets('a dialog opens, returns a value and closes', (tester) async {
+      int? result;
+      await tester.pumpWidget(
+        GlimmerApp(
+          home: GlimmerScaffold(
+            body: Builder(
+              builder: (context) => GlimmerButton(
+                label: 'Open',
+                onPressed: () async {
+                  result = await showGlimmerDialog<int>(
+                    context: context,
+                    builder: (context) => GlimmerDialog(
+                      title: 'Leave the queue?',
+                      content: 'You will lose your place.',
+                      actions: [
+                        GlimmerButton(
+                          label: 'Stay',
+                          onPressed: () => Navigator.of(context).pop(0),
+                        ),
+                        GlimmerButton(
+                          label: 'Leave',
+                          onPressed: () => Navigator.of(context).pop(1),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      expect(find.text('Leave the queue?'), findsOneWidget);
+      expect(find.byType(GlimmerModalScrim), findsOneWidget);
+
+      await tester.tap(find.text('Leave'));
+      await tester.pumpAndSettle();
+      expect(find.text('Leave the queue?'), findsNothing);
+      expect(result, 1);
+    });
+
+    testWidgets('tapping the scrim dismisses a dismissible dialog',
+        (tester) async {
+      await tester.pumpWidget(
+        GlimmerApp(
+          home: GlimmerScaffold(
+            body: Builder(
+              builder: (context) => GlimmerButton(
+                label: 'Open',
+                onPressed: () => showGlimmerDialog<void>(
+                  context: context,
+                  builder: (context) => const GlimmerDialog(title: 'Hello'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      expect(find.text('Hello'), findsOneWidget);
+
+      await tester.tapAt(const Offset(20, 20));
+      await tester.pumpAndSettle();
+      expect(find.text('Hello'), findsNothing);
+    });
+
+    testWidgets('a non-dismissible dialog ignores the scrim', (tester) async {
+      await tester.pumpWidget(
+        GlimmerApp(
+          home: GlimmerScaffold(
+            body: Builder(
+              builder: (context) => GlimmerButton(
+                label: 'Open',
+                onPressed: () => showGlimmerDialog<void>(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => const GlimmerDialog(title: 'Stuck'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      await tester.tapAt(const Offset(20, 20));
+      await tester.pumpAndSettle();
+      expect(find.text('Stuck'), findsOneWidget);
+    });
+
+    testWidgets('a bottom sheet opens and drags away', (tester) async {
+      await tester.pumpWidget(
+        GlimmerApp(
+          home: GlimmerScaffold(
+            body: Builder(
+              builder: (context) => GlimmerButton(
+                label: 'Open',
+                onPressed: () => showGlimmerBottomSheet<void>(
+                  context: context,
+                  builder: (context) => const GlimmerBottomSheet(
+                    title: 'Sort by',
+                    child: Text('Newest first'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sort by'), findsOneWidget);
+
+      await tester.fling(
+        find.byType(GlimmerBottomSheet),
+        const Offset(0, 300),
+        1500,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Sort by'), findsNothing);
+    });
+  });
+
+  group('snackbar', () {
+    testWidgets('appears, carries an action and leaves on its own',
+        (tester) async {
+      var acted = false;
+      await tester.pumpWidget(
+        GlimmerApp(
+          home: GlimmerScaffold(
+            body: Builder(
+              builder: (context) => GlimmerButton(
+                label: 'Show',
+                onPressed: () => showGlimmerSnackbar(
+                  context,
+                  message: 'Saved to your list',
+                  actionLabel: 'Undo',
+                  onAction: () => acted = true,
+                  duration: const Duration(seconds: 2),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Show'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('Saved to your list'), findsOneWidget);
+
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+      expect(acted, isTrue);
+      expect(find.text('Saved to your list'), findsNothing);
+    });
+
+    testWidgets('a second message replaces the first', (tester) async {
+      late BuildContext ctx;
+      await tester.pumpWidget(
+        GlimmerApp(
+          home: GlimmerScaffold(
+            body: Builder(
+              builder: (context) {
+                ctx = context;
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+        ),
+      );
+
+      showGlimmerSnackbar(ctx, message: 'First');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('First'), findsOneWidget);
+
+      showGlimmerSnackbar(ctx, message: 'Second');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('First'), findsNothing);
+      expect(find.text('Second'), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      expect(find.text('Second'), findsNothing);
+    });
+  });
+
+  group('menu', () {
+    testWidgets('opens against its anchor and returns the choice',
+        (tester) async {
+      String? chosen;
+      await tester.pumpWidget(
+        GlimmerApp(
+          home: GlimmerScaffold(
+            body: Center(
+              child: Builder(
+                builder: (context) => GlimmerButton(
+                  label: 'More',
+                  onPressed: () async {
+                    chosen = await showGlimmerMenu<String>(
+                      context: context,
+                      items: const [
+                        GlimmerMenuItem(label: 'Share', value: 'share'),
+                        GlimmerMenuItem(
+                          label: 'Delete',
+                          value: 'delete',
+                          destructive: true,
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('More'));
+      await tester.pumpAndSettle();
+      expect(find.text('Share'), findsOneWidget);
+      expect(find.text('Delete'), findsOneWidget);
+
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+      expect(chosen, 'delete');
+      expect(find.text('Share'), findsNothing);
+    });
+
+    testWidgets('a disabled item cannot be chosen', (tester) async {
+      var closed = false;
+      await tester.pumpWidget(
+        GlimmerApp(
+          home: GlimmerScaffold(
+            body: Center(
+              child: Builder(
+                builder: (context) => GlimmerButton(
+                  label: 'More',
+                  onPressed: () async {
+                    await showGlimmerMenu<String>(
+                      context: context,
+                      items: const [
+                        GlimmerMenuItem(
+                          label: 'Unavailable',
+                          value: 'x',
+                          enabled: false,
+                        ),
+                      ],
+                    );
+                    closed = true;
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('More'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Unavailable'));
+      await tester.pumpAndSettle();
+
+      // Still open, nothing chosen.
+      expect(find.text('Unavailable'), findsOneWidget);
+      expect(closed, isFalse);
+    });
+  });
+
+  group('text outside a Material', () {
+    // Flutter's ambient text style, with no Material above it, is the red
+    // monospace error style with a yellow underline. A surface that merges into
+    // that style keeps the underline and the typeface, which is invisible
+    // inside a Scaffold and very visible in a dialog, a menu or a snackbar.
+    Future<TextStyle> styleInside(
+      WidgetTester tester,
+      Future<void> Function(BuildContext context) open,
+    ) async {
+      late TextStyle style;
+
+      await tester.pumpWidget(
+        GlimmerApp(
+          home: GlimmerScaffold(
+            body: Builder(
+              builder: (context) => GlimmerButton(
+                label: 'Open',
+                onPressed: () => open(context),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      style = DefaultTextStyle.of(
+        tester.element(find.byKey(const ValueKey('probe'))),
+      ).style;
+      return style;
+    }
+
+    void expectClean(TextStyle style) {
+      expect(style.decoration ?? TextDecoration.none, TextDecoration.none);
+      expect(style.fontFamily, isNot('monospace'));
+      expect(style.color, isNot(const Color(0xD0FF0000)));
+    }
+
+    testWidgets('a dialog gets a real text style', (tester) async {
+      final style = await styleInside(
+        tester,
+        (context) => showGlimmerDialog<void>(
+          context: context,
+          builder: (context) => const GlimmerDialog(
+            title: 'Title',
+            child: Text('body', key: ValueKey('probe')),
+          ),
+        ),
+      );
+      expectClean(style);
+    });
+
+    testWidgets('a bottom sheet gets a real text style', (tester) async {
+      final style = await styleInside(
+        tester,
+        (context) => showGlimmerBottomSheet<void>(
+          context: context,
+          builder: (context) => const GlimmerBottomSheet(
+            child: Text('body', key: ValueKey('probe')),
+          ),
+        ),
+      );
+      expectClean(style);
+    });
+
+    testWidgets('a surface outside any Material gets a real text style',
+        (tester) async {
+      late TextStyle style;
+      await tester.pumpWidget(
+        GlimmerApp(
+          home: GlimmerSurface(
+            child: Builder(
+              builder: (context) {
+                style = DefaultTextStyle.of(context).style;
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expectClean(style);
+    });
+  });
+
+  group('slider', () {
+    testWidgets('reports a value from a tap and a drag', (tester) async {
+      var value = 0.0;
+      await tester.pumpWidget(
+        host(
+          SizedBox(
+            width: 300,
+            child: StatefulBuilder(
+              builder: (context, setState) => GlimmerSlider(
+                value: value,
+                onChanged: (next) => setState(() => value = next),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final centre = tester.getCenter(find.byType(GlimmerSlider));
+      await tester.tapAt(centre);
+      await tester.pumpAndSettle();
+      expect(value, closeTo(0.5, 0.05));
+
+      await tester.dragFrom(centre, const Offset(120, 0));
+      await tester.pumpAndSettle();
+      expect(value, greaterThan(0.8));
+    });
+
+    testWidgets('snaps to divisions', (tester) async {
+      var value = 0.0;
+      await tester.pumpWidget(
+        host(
+          SizedBox(
+            width: 300,
+            child: StatefulBuilder(
+              builder: (context, setState) => GlimmerSlider(
+                value: value,
+                divisions: 4,
+                onChanged: (next) => setState(() => value = next),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tapAt(tester.getCenter(find.byType(GlimmerSlider)));
+      await tester.pumpAndSettle();
+      expect(value, 0.5);
+    });
+
+    testWidgets('is inert and dimmed when disabled', (tester) async {
+      await tester.pumpWidget(
+        host(
+          const SizedBox(
+            width: 300,
+            child: GlimmerSlider(value: 0.5, onChanged: null),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final opacity = tester.widget<AnimatedOpacity>(
+        find.byType(AnimatedOpacity).first,
+      );
+      expect(opacity.opacity, lessThan(1));
+    });
+
+    testWidgets('announces itself as a slider', (tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(
+        host(
+          SizedBox(
+            width: 300,
+            child: GlimmerSlider(
+              value: 0.25,
+              semanticLabel: 'Volume',
+              onChanged: (_) {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        tester.getSemantics(find.byType(GlimmerSlider)),
+        isSemantics(isSlider: true, label: 'Volume', value: '25%'),
+      );
+      handle.dispose();
+    });
+  });
+
+  group('overscroll', () {
+    testWidgets('lights the edge without moving the content', (tester) async {
+      await tester.pumpWidget(
+        GlimmerApp(
+          home: GlimmerScaffold(
+            body: ListView.builder(
+              itemCount: 4,
+              itemBuilder: (context, index) =>
+                  GlimmerListItem(label: 'Row $index'),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final before = tester.getTopLeft(find.text('Row 0'));
+      final gesture = await tester.startGesture(const Offset(400, 300));
+      await gesture.moveBy(const Offset(0, 200));
+      await tester.pump();
+
+      // Material would have stretched or translated the content by now.
+      expect(tester.getTopLeft(find.text('Row 0')), before);
+      expect(find.byType(GlimmerOverscrollIndicator), findsOneWidget);
+
+      await gesture.up();
+      await tester.pumpAndSettle();
     });
   });
 }

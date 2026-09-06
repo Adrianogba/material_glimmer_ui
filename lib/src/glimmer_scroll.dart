@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
 
-/// Scrolling that does not break glass.
+import 'glimmer_overscroll.dart';
+
+/// Scrolling that looks like Glimmer and does not break glass.
 ///
-/// Android's default overscroll is a stretch, and to scale the content Flutter
-/// renders it into an offscreen layer. A [GlimmerSurface] reads what is painted
-/// behind it, and inside that layer there is nothing behind it, so every glass
-/// panel on the screen goes flat for as long as the stretch lasts and snaps
-/// back when it ends.
+/// Two problems with the platform defaults, and they have the same answer.
 ///
-/// The fix is not to drop overscroll feedback. Reaching the end of a list is
-/// worth saying, and saying nothing is its own bug. This paints a glow instead:
-/// it is drawn over the content rather than by transforming it, so nothing is
-/// isolated and the surfaces stay transparent throughout.
+/// Android stretches the content at the end of a list. To scale it, Flutter
+/// renders the scrollable into an offscreen layer, and a [GlimmerSurface] reads
+/// what is painted behind it: inside that layer there is nothing behind it, so
+/// every glass panel on screen goes flat for as long as the stretch lasts.
 ///
-/// [GlimmerApp] installs it. Pass your own `scrollBehavior` to opt out, and
-/// expect the flicker if you choose the stretch.
+/// The second problem is that a stretch is Material's gesture and a bounce is
+/// Cupertino's. A kit that wants an identity of its own cannot borrow either.
+///
+/// So the content does not move. [GlimmerOverscrollIndicator] lights up the
+/// edge the list ran into instead, with the same graded light the surfaces use
+/// on their own edges. It is painted over the content, so nothing is isolated.
+///
+/// [GlimmerApp] installs this. Pass your own `scrollBehavior` to opt out.
 class GlimmerScrollBehavior extends MaterialScrollBehavior {
   /// Creates the Glimmer scroll behaviour.
   const GlimmerScrollBehavior();
@@ -25,21 +29,9 @@ class GlimmerScrollBehavior extends MaterialScrollBehavior {
     Widget child,
     ScrollableDetails details,
   ) {
-    switch (getPlatform(context)) {
-      case TargetPlatform.iOS:
-      case TargetPlatform.macOS:
-        // These bounce instead, which is a physics effect on the scroll
-        // position rather than a layer, so it is already safe.
-        return child;
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.windows:
-        return GlowingOverscrollIndicator(
-          axisDirection: details.direction,
-          color: Theme.of(context).colorScheme.primary,
-          child: child,
-        );
-    }
+    return GlimmerOverscrollIndicator(
+      axisDirection: details.direction,
+      child: child,
+    );
   }
 }

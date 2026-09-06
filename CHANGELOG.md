@@ -42,7 +42,15 @@ First release.
   `GlimmerIconToggleButton`, `GlimmerText`, `GlimmerIcon`, `GlimmerTitleChip`,
   `GlimmerList`, `GlimmerListItem`, `GlimmerStack`, `GlimmerScrim` and
   `GlimmerVoiceInputIndicator`.
-- Mobile additions that do not exist in Glimmer: `GlimmerTextField`,
+- `GlimmerOverscrollIndicator`, installed by `GlimmerScrollBehavior`. Neither
+  Material's stretch nor Cupertino's bounce: the content does not move and the
+  edge it ran into lights up instead.
+- `GlimmerSlider`, shaped after the media scrubber Glimmer shows rather than
+  after Material's slider, with the surface states on the thumb and no ripple.
+- Overlays, none of which exist in Glimmer: `showGlimmerDialog`,
+  `showGlimmerBottomSheet`, `showGlimmerSnackbar` and `showGlimmerMenu`, over a
+  `GlimmerModalScrim` that blurs the app as well as dimming it.
+- Other mobile additions that do not exist in Glimmer: `GlimmerTextField`,
   `GlimmerSwitch`, `GlimmerProgressBar`, `GlimmerScaffold` and `GlimmerTopBar`.
 - Additive surfaces, composited with `BlendMode.plus` to reproduce the way a
   lens display adds light instead of blocking it.

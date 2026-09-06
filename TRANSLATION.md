@@ -33,7 +33,8 @@ under Apache 2.0, and this package is MIT.
 | `IconButton` | `GlimmerIconButton` | 48 minimum size, `small` padding |
 | `GlimmerHorizontalPager` | `GlimmerPager` | 0.9 minimum scale, 0.69 scale threshold, 0.82 blur threshold, 2 blur, bottom transform origin, 50 edge scrim with its 0.05/0.35/0.65/0.95 envelope |
 | `PageIndicator` | `GlimmerPageIndicator` | 6 radius, 27 centre to centre, 18 selected bar, 7 maximum, 8/12 edge fraction, 0.3 unselected alpha |
-| `Stack` | `GlimmerStack` | 18 reveal, 0.94 next-item scale, 0.5 maximum scrim, two items behind, snap spring |
+| `Stack` | `GlimmerStack` | 18 reveal, 0.94 next-item scale, `#4F4F4F` wash to 0.5, `dstOut` erase, two items behind, snap spring |
+| `Scrim` | `GlimmerScrim` | erases with `dstOut` over 48, rather than painting the background colour |
 | `VoiceInputIndicator` | `GlimmerVoiceInputIndicator` | 32 container, 6 dot, 5x middle bar, 4.2 side offset, 3 spacing |
 
 ## Changed on purpose
@@ -47,7 +48,7 @@ under Apache 2.0, and this package is MIT.
 | Border shader | AGSL runtime shader, Android 13+ | sampled `SweepGradient` | Runs on every platform Flutter does. Same maths, including the square-normalised angle so the corners land on the component's real corners. |
 | Progressive border blur | per-pixel in the shader | two strokes, soft under sharp | A single stroke cannot vary its blur along its own length. |
 | `withTone` | HCT, with a CAM16 gamut solve | CIELAB L\*, keeping a\* and b\* | Tone is defined as L\* and `HctUtils` uses the same Epsilon and Kappa. The gamut solve is not reproduced; colours pushed out of sRGB are clamped per channel instead. The shifts Glimmer actually performs are small enough that the two agree. |
-| Overscroll | not applicable | glow, never stretch | The stretch renders scrolling content into an offscreen layer, which leaves a surface with no backdrop to read and flattens every glass panel on screen. |
+| Overscroll | not applicable | a lit edge, never a stretch or a bounce | The stretch renders scrolling content into an offscreen layer, which leaves a surface with no backdrop to read and flattens every glass panel on screen. A stretch is also Material's gesture and a bounce is Cupertino's. |
 | Drop shadows | drawn behind the component | clipped to outside its shape | A glass surface reads what is painted behind it, so a shadow left underneath is blurred into the surface's own fill and washes it black. |
 | Focus | roving, follows the wearer | driven by selection and keyboard focus | A phone has no gaze or touchpad. |
 
@@ -59,6 +60,37 @@ under Apache 2.0, and this package is MIT.
   than a per-pixel progressive blur, and off by default.
 - **Google Sans Flex.** Glimmer's typeface, and a variable font. This package
   ships no assets, so `fontFamily` is a parameter.
+
+## Depth is transparency
+
+Glimmer's depth levels are black shadows, and on an additive display black is
+rendered as nothing at all. So a Glimmer shadow does not darken what is under
+it, it *removes* it: the surface behind stops being drawn where the surface in
+front approaches, and the world shows through the gap.
+
+That is why the stack erases the item behind with `BlendMode.dstOut` and washes
+it with `#4F4F4F` rather than fading it to black, and why `GlimmerScrim` takes
+the content's own alpha down instead of painting the background colour over it.
+Opacity and a black overlay look equivalent on a flat page and are visibly wrong
+over a backdrop.
+
+The surfaces themselves keep real shadows. On a phone the app behind a card is
+opaque, so there is nothing to reveal by erasing, and a shadow is the closest
+honest equivalent. Their alphas are pulled well down from the published ones for
+the same reason.
+
+## Added for mobile
+
+Glimmer has none of these, because a glasses app shows one thing at a time and
+is dismissed with the back gesture. Each is derived from the tokens rather than
+borrowed from Material: the scrim's 50% comes from the scrim Glimmer puts over
+the items behind the top of a stack, and the panels are surfaces at depth levels
+3 and 4.
+
+`showGlimmerDialog` · `showGlimmerBottomSheet` · `showGlimmerSnackbar` ·
+`showGlimmerMenu` · `GlimmerScaffold` · `GlimmerTopBar` · `GlimmerTextField` ·
+`GlimmerSwitch` · `GlimmerSlider` · `GlimmerProgressBar` · `GlimmerBackdrop` ·
+`GlimmerScrollBehavior` · `GlimmerOverscrollIndicator` · `GlimmerApp`
 
 ## Not translated yet
 

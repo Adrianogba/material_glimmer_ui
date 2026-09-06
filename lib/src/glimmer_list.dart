@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/physics.dart';
 
+import 'glimmer_motion.dart';
 import 'glimmer_surface.dart';
 import 'glimmer_theme.dart';
 import 'glimmer_title_chip.dart';
@@ -258,16 +260,17 @@ class GlimmerStack extends StatefulWidget {
   /// The scale of an item once it is fully behind the top one.
   static const nextItemScale = 0.94;
 
-  /// The darkest a scrim over an item behind gets.
+  /// The strongest the wash over an item behind gets.
   static const maxItemScrimAlpha = 0.5;
 
-  /// The spring Glimmer snaps stack items with.
-  static const snapSpring = SpringDescription(
-    mass: 1,
-    stiffness: 118,
-    // dampingRatio 0.56 against the stiffness above.
-    damping: 12.19,
-  );
+  /// The colour washed over an item behind the top one.
+  ///
+  /// Grey rather than black, and drawn over the item rather than under it.
+  static const itemScrimColor = Color(0xFF4F4F4F);
+
+  /// The spring Glimmer snaps stack items with. See
+  /// [GlimmerMotion.settleSpring].
+  static const snapSpring = GlimmerMotion.settleSpring;
 
   @override
   State<GlimmerStack> createState() => _GlimmerStackState();
@@ -342,32 +345,27 @@ class _GlimmerStackState extends State<GlimmerStack>
       // is leaving, so it rises out and fades.
       final behind = distance.clamp(0.0, widget.visibleBehind.toDouble());
       final leaving = (-distance).clamp(0.0, 1.0);
-      final opacity = 1 - leaving;
-      if (opacity <= 0) continue;
+      if (leaving >= 1) continue;
 
       final scale = 1 - ((1 - GlimmerStack.nextItemScale) * behind.clamp(0, 1));
       final scrim =
           (behind.clamp(0, 1) * GlimmerStack.maxItemScrimAlpha).toDouble();
       final dy = (reveal * behind) - (leaving * reveal * 3);
 
-      // The scrim is applied as a filter over the item rather than as a box on
-      // top of it. A box would be a rectangle and would have to be told the
-      // item's corner radius; srcATop tints only where the item actually
-      // painted, so it follows whatever shape the item happens to be.
-      Widget content = widget.children[i];
-      if (scrim > 0) {
-        content = ColorFiltered(
-          colorFilter: ColorFilter.mode(
-            const Color(0xFF000000).withValues(alpha: scrim),
-            BlendMode.srcATop,
-          ),
-          child: content,
-        );
-      }
-
+      // An item behind the top one is washed with grey and then erased, not
+      // darkened and faded. Glimmer's depth is transparency: on an additive
+      // display the thing behind stops being drawn rather than being covered,
+      // and a card in front of it shows the world through the gap. Opacity over
+      // black is the wrong translation twice over, since it darkens where the
+      // backdrop should come through and tints toward black where the published
+      // wash is grey.
       final item = IgnorePointer(
         ignoring: i != _index,
-        child: Opacity(opacity: opacity, child: content),
+        child: _ErasedItem(
+          scrim: scrim,
+          erase: leaving,
+          child: widget.children[i],
+        ),
       );
 
       final placed = Transform.translate(
@@ -409,48 +407,166 @@ class _GlimmerStackState extends State<GlimmerStack>
   }
 }
 
-/// A gradient veil that fades content out at an edge.
+/// Fades content out toward an edge by erasing it.
 ///
-/// Glimmer puts one under a stack so the items behind the front card dissolve
-/// instead of ending abruptly, and at the edges of a scrolling list for the same
-/// reason. It uses the background colour, so it is invisible against the
-/// background itself and only reads where content passes under it.
+/// Glimmer puts one at the end of a scrolling list and over the top of a stack.
+/// It does not paint the background colour over the content, it takes the
+/// content's own alpha down with [BlendMode.dstOut], so whatever the app has
+/// behind the list comes through rather than a band of flat colour appearing on
+/// top of it. Over a [GlimmerBackdrop] that difference is the whole point.
+///
+/// Wrap the thing being faded:
+///
+/// ```dart
+/// GlimmerScrim(
+///   alignment: Alignment.bottomCenter,
+///   child: GlimmerList(children: rows),
+/// )
+/// ```
 class GlimmerScrim extends StatelessWidget {
-  /// Creates a scrim fading toward [alignment].
+  /// Creates a scrim over [child].
   const GlimmerScrim({
     super.key,
+    required this.child,
     this.alignment = Alignment.bottomCenter,
-    this.extent = 64,
-    this.color,
+    this.extent = 48,
   });
 
-  /// Which edge the scrim is anchored to and fades toward.
+  /// The content to fade.
+  final Widget child;
+
+  /// Which edge the fade is anchored to.
   final Alignment alignment;
 
-  /// How far the fade reaches from that edge.
+  /// How far the fade reaches in from that edge. Glimmer's own is 48.
   final double extent;
-
-  /// The colour to fade to. Defaults to [GlimmerColors.background].
-  final Color? color;
 
   @override
   Widget build(BuildContext context) {
-    final veil = color ?? GlimmerTheme.colorsOf(context).background;
-    final vertical = alignment.y.abs() >= alignment.x.abs();
-    return IgnorePointer(
-      child: SizedBox(
-        width: vertical ? double.infinity : extent,
-        height: vertical ? extent : double.infinity,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: alignment,
-              end: -alignment,
-              colors: [veil, veil.withValues(alpha: 0)],
-            ),
-          ),
-        ),
-      ),
+    if (extent <= 0) return child;
+
+    return ShaderMask(
+      blendMode: BlendMode.dstOut,
+      shaderCallback: (bounds) {
+        final vertical = alignment.y.abs() >= alignment.x.abs();
+        final span = vertical ? bounds.height : bounds.width;
+        final stop = span <= 0 ? 0.0 : (extent / span).clamp(0.0, 1.0);
+        return LinearGradient(
+          begin: alignment,
+          end: -alignment,
+          colors: const [Color(0xFF000000), Color(0x00000000)],
+          stops: [0, stop],
+        ).createShader(bounds);
+      },
+      child: child,
     );
+  }
+}
+
+/// Washes an item with the stack's scrim colour and then erases it.
+///
+/// The erase is [BlendMode.dstOut], which takes the item's own alpha down
+/// instead of painting something over it. That is what Glimmer does, and on a
+/// phone it is the difference between a card behind another one dissolving and
+/// the same card being smeared with black.
+///
+/// Both passes are inside one layer so they clip to whatever shape the item
+/// actually is, without this widget being told its corner radius.
+class _ErasedItem extends StatelessWidget {
+  const _ErasedItem({
+    required this.child,
+    required this.scrim,
+    required this.erase,
+  });
+
+  final Widget child;
+  final double scrim;
+  final double erase;
+
+  @override
+  Widget build(BuildContext context) {
+    if (scrim <= 0 && erase <= 0) return child;
+
+    return _ErasePainter(
+      scrim: scrim,
+      erase: erase,
+      child: child,
+    );
+  }
+}
+
+class _ErasePainter extends SingleChildRenderObjectWidget {
+  const _ErasePainter({
+    required this.scrim,
+    required this.erase,
+    required Widget super.child,
+  });
+
+  final double scrim;
+  final double erase;
+
+  @override
+  _RenderErase createRenderObject(BuildContext context) =>
+      _RenderErase(scrim: scrim, erase: erase);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderErase renderObject) {
+    renderObject
+      ..scrim = scrim
+      ..erase = erase;
+  }
+}
+
+class _RenderErase extends RenderProxyBox {
+  _RenderErase({required double scrim, required double erase})
+      : _scrim = scrim,
+        _erase = erase;
+
+  double _scrim;
+  double _erase;
+
+  set scrim(double value) {
+    if (_scrim == value) return;
+    _scrim = value;
+    markNeedsPaint();
+  }
+
+  set erase(double value) {
+    if (_erase == value) return;
+    _erase = value;
+    markNeedsPaint();
+  }
+
+  @override
+  bool get alwaysNeedsCompositing => true;
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    if (child == null) return;
+    final bounds = offset & size;
+
+    // The item is drawn into its own layer so the two passes below affect only
+    // it, rather than everything painted behind it on the page.
+    context.canvas.saveLayer(bounds, Paint());
+    super.paint(context, offset);
+
+    if (_scrim > 0) {
+      context.canvas.drawRect(
+        bounds,
+        Paint()
+          ..color = GlimmerStack.itemScrimColor.withValues(alpha: _scrim)
+          ..blendMode = BlendMode.srcATop,
+      );
+    }
+    if (_erase > 0) {
+      context.canvas.drawRect(
+        bounds,
+        Paint()
+          ..color = const Color(0xFF000000).withValues(alpha: _erase)
+          ..blendMode = BlendMode.dstOut,
+      );
+    }
+
+    context.canvas.restore();
   }
 }

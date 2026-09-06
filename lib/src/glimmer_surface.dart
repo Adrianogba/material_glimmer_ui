@@ -425,6 +425,12 @@ class _GlimmerSurfaceState extends State<GlimmerSurface>
           // and text on the theme's, which on a dark ground happen to look the
           // same and on a light one give a white icon beside black text.
           //
+          // The style replaces the ambient one rather than merging into it, the
+          // way Material's own Material does. Merging looks equivalent until a
+          // surface is used outside any Material, where the ambient style is
+          // Flutter's red monospace error style: a merge keeps its underline
+          // and its typeface and only changes the size and the colour.
+          //
           // Glimmer's ambient text style is bodySmall and its ambient icon size
           // is medium. Components that want something else say so.
           child: _GlimmerSurfaceGesture(
@@ -433,8 +439,11 @@ class _GlimmerSurfaceState extends State<GlimmerSurface>
             onLongPress: widget.onLongPress,
             onPressStart: enabled ? _handlePressStart : null,
             onPressEnd: enabled ? _handlePressEnd : null,
-            child: DefaultTextStyle.merge(
-              style: tokens.typography.bodySmall.copyWith(color: contentColor),
+            child: DefaultTextStyle(
+              style: tokens.typography.bodySmall.copyWith(
+                color: contentColor,
+                decoration: TextDecoration.none,
+              ),
               child: IconTheme.merge(
                 data: IconThemeData(
                   color: contentColor,

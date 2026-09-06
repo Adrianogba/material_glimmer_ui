@@ -190,6 +190,7 @@ Turn it off with `additive: false` on a surface that has to be opaque.
 | `HorizontalPager` | `GlimmerPager`, `GlimmerPageIndicator` |
 | `Stack` | `GlimmerStack` |
 | `Scrim` | `GlimmerScrim` |
+| the stack's item scrim | `GlimmerStack.itemScrimColor` |
 | `VoiceInputIndicator` | `GlimmerVoiceInputIndicator` |
 | `Colors`, `Typography`, `Shapes`, `ComponentSpacingValues`, `IconSizes`, `DepthEffectLevels` | `GlimmerColors`, `GlimmerTypography`, `GlimmerShapes`, `GlimmerSpacing`, `GlimmerIconSizes`, `GlimmerDepth` |
 | the border shader | `GlimmerEdge`, `GlimmerEdgeBlur` |
@@ -202,20 +203,37 @@ glasses take text by voice, show one thing at a time and are dismissed with the
 back gesture, so there is no text field, no switch and no bar across the top. A
 phone app needs all three.
 
-`GlimmerTextField` · `GlimmerSwitch` · `GlimmerProgressBar` ·
-`GlimmerScaffold` · `GlimmerTopBar` · `GlimmerNavigationItem`
+**Overlays.** Glasses show one thing at a time, so a panel interrupting another
+panel has nowhere to go. A phone needs all four, and the design language already
+says what they should look like: a surface at a high depth level over an app
+that has been blurred and dimmed.
+
+`showGlimmerDialog` · `showGlimmerBottomSheet` · `showGlimmerSnackbar` ·
+`showGlimmerMenu` · `GlimmerDialog` · `GlimmerBottomSheet` ·
+`GlimmerSnackbar` · `GlimmerMenu` · `GlimmerModalScrim`
+
+**The rest.**
+`GlimmerSlider` · `GlimmerTextField` · `GlimmerSwitch` ·
+`GlimmerProgressBar` · `GlimmerScaffold` · `GlimmerTopBar` ·
+`GlimmerNavigationItem` · `GlimmerOverscrollIndicator`
 
 ## Scrolling
 
-`GlimmerApp` installs `GlimmerScrollBehavior`. Android's overscroll stretch
-scales the scrolling content, and to do that Flutter renders it into an
-offscreen layer. A surface that reads what is painted behind it finds nothing
-there, so every glass panel on the screen goes flat for as long as the stretch
-lasts and snaps back when it ends.
+Material stretches a list at its end and Cupertino bounces it. Both move the
+content, and this kit cannot afford to: a stretch renders the scrollable into an
+offscreen layer, and every glass surface inside it loses the backdrop it was
+reading. Borrowing either gesture would also mean borrowing someone else's
+identity.
 
-Dropping overscroll feedback would be its own bug, so the behaviour paints a
-glow instead. It is drawn over the content rather than by transforming it, so
-nothing is isolated. Pass your own `scrollBehavior` to opt out.
+So the content does not move. `GlimmerOverscrollIndicator` lights up the edge
+the list ran into, using the same graded light the surfaces use on their own
+edges: a crisp line at the boundary and a bloom falling away from it, both
+brightening with how hard the list is pushed, and falling away on the same
+spring everything else settles with. It is painted over the content, so nothing
+is isolated.
+
+`GlimmerApp` installs it through `GlimmerScrollBehavior`. Pass your own
+`scrollBehavior` to opt out.
 
 ## Deliberately left out
 

@@ -131,8 +131,8 @@ class _OverviewPageState extends State<_OverviewPage> {
         SizedBox(height: spacing.medium),
         Text(
           'Surfaces filter what is behind them instead of covering it. Focus '
-          'is a lit edge rather than a ripple. Depth is a real shadow rather '
-          'than a tonal overlay.',
+          'is a lit edge rather than a ripple. Pushing a list past its end '
+          'lights the edge instead of stretching it.',
           style: type.bodySmall.copyWith(color: tokens.colors.outline),
         ),
         SizedBox(height: spacing.extraLarge),
@@ -255,6 +255,10 @@ class _ComponentsPage extends StatefulWidget {
   State<_ComponentsPage> createState() => _ComponentsPageState();
 }
 
+/// Roughly the height of the gallery's own navigation strip, so a message
+/// clears it instead of landing on top.
+const _navigationStripHeight = 76.0;
+
 class _ComponentsPageState extends State<_ComponentsPage> {
   final _bought = <String>{};
   var _muted = false;
@@ -275,6 +279,102 @@ class _ComponentsPageState extends State<_ComponentsPage> {
     'Kale',
     'Coffee',
   ];
+
+  Future<void> _openDialog(BuildContext context) async {
+    final leaving = await showGlimmerDialog<bool>(
+      context: context,
+      builder: (context) => GlimmerDialog(
+        icon: Icons.storefront,
+        title: 'Leave the queue?',
+        content: 'You are third in line at the Mercado Municipal.',
+        actions: [
+          GlimmerButton(
+            label: 'Stay',
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          GlimmerButton(
+            label: 'Leave',
+            prominent: true,
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
+      ),
+    );
+    if (leaving == true && context.mounted) {
+      showGlimmerSnackbar(
+        context,
+        message: 'You left the queue',
+        bottomInset: _navigationStripHeight,
+      );
+    }
+  }
+
+  Future<void> _openSheet(BuildContext context) async {
+    final choice = await showGlimmerBottomSheet<String>(
+      context: context,
+      builder: (context) => GlimmerBottomSheet(
+        title: 'Sort the market list',
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final option in const ['By aisle', 'By price', 'Alphabetical'])
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: GlimmerListItem(
+                  label: option,
+                  leadingIcon: Icons.sort,
+                  onTap: () => Navigator.of(context).pop(option),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (choice != null && context.mounted) {
+      showGlimmerSnackbar(
+        context,
+        message: 'Sorted $choice',
+        bottomInset: _navigationStripHeight,
+      );
+    }
+  }
+
+  Future<void> _openMenu(BuildContext context) async {
+    final choice = await showGlimmerMenu<String>(
+      context: context,
+      items: const [
+        GlimmerMenuItem(
+          label: 'Share the list',
+          value: 'share',
+          icon: Icons.ios_share,
+        ),
+        GlimmerMenuItem(
+          label: 'Duplicate',
+          value: 'duplicate',
+          icon: Icons.copy_all_outlined,
+        ),
+        GlimmerMenuItem(
+          label: 'Not available offline',
+          value: 'offline',
+          icon: Icons.cloud_off,
+          enabled: false,
+        ),
+        GlimmerMenuItem(
+          label: 'Delete the list',
+          value: 'delete',
+          icon: Icons.delete_outline,
+          destructive: true,
+        ),
+      ],
+    );
+    if (choice != null && context.mounted) {
+      showGlimmerSnackbar(
+        context,
+        message: 'Chose $choice',
+        bottomInset: _navigationStripHeight,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -376,6 +476,51 @@ class _ComponentsPageState extends State<_ComponentsPage> {
           ],
         ),
         SizedBox(height: spacing.extraLarge),
+        const _SectionLabel('Overlays'),
+        SizedBox(height: spacing.small),
+        Text(
+          'A panel over a blurred app, a sheet from the bottom, a message that '
+          'leaves on its own, a menu against its anchor.',
+          style:
+              tokens.typography.caption.copyWith(color: tokens.colors.outline),
+        ),
+        SizedBox(height: spacing.medium),
+        Wrap(
+          spacing: spacing.medium,
+          runSpacing: spacing.medium,
+          children: [
+            GlimmerButton(
+              label: 'Dialog',
+              leadingIcon: Icons.chat_outlined,
+              onPressed: () => _openDialog(context),
+            ),
+            GlimmerButton(
+              label: 'Sheet',
+              leadingIcon: Icons.vertical_align_bottom,
+              onPressed: () => _openSheet(context),
+            ),
+            GlimmerButton(
+              label: 'Message',
+              leadingIcon: Icons.campaign_outlined,
+              onPressed: () => showGlimmerSnackbar(
+                context,
+                message: 'Added to the Saturday market list',
+                icon: Icons.check_circle_outline,
+                actionLabel: 'Undo',
+                onAction: () {},
+                bottomInset: _navigationStripHeight,
+              ),
+            ),
+            Builder(
+              builder: (context) => GlimmerButton(
+                label: 'Menu',
+                leadingIcon: Icons.more_horiz,
+                onPressed: () => _openMenu(context),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: spacing.extraLarge),
         const _SectionLabel('Mobile additions'),
         SizedBox(height: spacing.small),
         Text(
@@ -401,9 +546,10 @@ class _ComponentsPageState extends State<_ComponentsPage> {
         ),
         SizedBox(height: spacing.large),
         GlimmerProgressBar(value: _progress),
-        SizedBox(height: spacing.small),
-        Slider(
+        SizedBox(height: spacing.medium),
+        GlimmerSlider(
           value: _progress,
+          semanticLabel: 'Progress',
           onChanged: (value) => setState(() => _progress = value),
         ),
       ],

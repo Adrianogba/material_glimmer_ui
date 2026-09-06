@@ -210,13 +210,17 @@ class _GlimmerNavigationStrip extends StatelessWidget {
     final unselected = colors.onSurface.withValues(alpha: 0.7);
 
     return Container(
-      padding: const EdgeInsets.all(5),
+      padding: EdgeInsets.all(tokens.spacing.extraSmall),
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: tokens.shapes.stadium,
         border: Border.all(color: colors.outline, width: 1.5),
       ),
       child: Row(
+        // A gap between the destinations, so the selected one reads as chosen
+        // rather than as one segment of a single bar. Without it the pills
+        // touch and the strip looks like a divided rectangle.
+        spacing: tokens.spacing.small,
         children: List.generate(items.length, (index) {
           final item = items[index];
           final selected = index == selectedIndex;

@@ -56,6 +56,34 @@ class GlimmerMotion {
     damping: 12.02,
   );
 
+  /// Glimmer's `spring(dampingRatio = .56f, stiffness = 118f)`, used to settle
+  /// something into place.
+  ///
+  /// Upstream it snaps stack items. It is the only positional spring Glimmer
+  /// publishes, so anything that moves into position uses it: a sheet rising, a
+  /// dialog arriving, a snackbar sliding in.
+  static const settleSpring = SpringDescription(
+    mass: 1,
+    stiffness: 118,
+    damping: 12.19,
+  );
+
+  /// How long a modal surface takes to arrive or leave.
+  ///
+  /// Glimmer has no modals, so this is a mobile addition. It is deliberately
+  /// far shorter than the 800 ms focus transition: focus is ambient and can
+  /// afford to be slow, while a panel the user asked for cannot.
+  static const modalDuration = Duration(milliseconds: 260);
+
+  /// The alpha of the veil drawn over the app behind a modal surface.
+  ///
+  /// Taken from the scrim Glimmer puts over the items behind the top of a
+  /// stack, which is the same idea: this is not the thing being read.
+  static const scrimOpacity = 0.5;
+
+  /// How far the app behind a modal surface is blurred.
+  static const scrimBlur = 18.0;
+
   /// The ambient sweep envelope at [progress] through
   /// [ambientPulseDuration].
   ///
