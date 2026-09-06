@@ -1,5 +1,5 @@
 name: material_glimmer_ui_example
-description: Gallery for material_glimmer_ui, showing every component in both themes and both scales.
+description: Gallery for material_glimmer_ui, showing every component in both themes.
 publish_to: none
 version: 1.0.0
 
@@ -20,3 +20,19 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Google Sans Flex, under the SIL Open Font License. See fonts/OFL.txt.
+  # The 9 pt optical cut, which is the one drawn for text at the sizes this
+  # gallery uses. The package itself ships no assets; this is the example
+  # showing what the theme's fontFamily is for.
+  fonts:
+    - family: Google Sans Flex
+      fonts:
+        - asset: fonts/GoogleSansFlex-Regular.ttf
+          weight: 400
+        - asset: fonts/GoogleSansFlex-Medium.ttf
+          weight: 500
+        - asset: fonts/GoogleSansFlex-SemiBold.ttf
+          weight: 600
+        - asset: fonts/GoogleSansFlex-Bold.ttf
+          weight: 700

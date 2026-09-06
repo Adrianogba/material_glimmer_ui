@@ -20,6 +20,10 @@ class _MaterialGlimmerGalleryState extends State<MaterialGlimmerGallery> {
     return MaterialGlimmerApp(
       title: 'Material Glimmer UI',
       debugShowCheckedModeBanner: false,
+      // The package ships no assets, so the typeface is the app's to choose.
+      // Every style in the kit flows from the theme, so setting it once here
+      // covers every piece of text in the gallery.
+      fontFamily: 'Google Sans Flex',
       themeMode: _mode,
       home: _GalleryHome(
         mode: _mode,
