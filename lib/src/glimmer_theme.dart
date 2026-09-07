@@ -286,6 +286,13 @@ class GlimmerTheme {
         size: tokens.iconSizes.medium,
       ),
       splashFactory: NoSplash.splashFactory,
+      // The selection highlight and the cursor are as much a part of editing
+      // as the outline around the field, so they take the focal colour too.
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: colors.primary,
+        selectionColor: colors.primary.withValues(alpha: 0.3),
+        selectionHandleColor: colors.primary,
+      ),
       extensions: [tokens],
     );
   }

@@ -79,6 +79,11 @@ First release.
   glass in the body keeps its backdrop the whole way down.
 - `GlimmerDivider`, graded light rather than a flat rule. `GlimmerBadge` and
   `GlimmerAvatar`, both carrying the same lit edge.
+- `GlimmerTextSelection`, the part of a text field a finger actually touches.
+  Round lit handles instead of teardrops, a glass `GlimmerTextSelectionMenu`
+  instead of the Cut/Copy/Paste slab, and a magnifier with a surface's graded
+  edge. `GlimmerTextField` and `GlimmerSearchField` install all three, and the
+  theme carries the focal colour into the cursor and the selection highlight.
 - Input and structure: `GlimmerTextField`, `GlimmerSwitch`, `GlimmerSlider`,
   `GlimmerScaffold` and `GlimmerTopBar`.
 - Additive surfaces, composited with `BlendMode.plus`, so a surface on dark adds

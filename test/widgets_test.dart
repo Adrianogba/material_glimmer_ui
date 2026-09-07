@@ -2337,4 +2337,112 @@ void main() {
       expect(states, [true, false]);
     });
   });
+
+  group('text selection', () {
+    // Everything around a field can be restyled. The part a finger touches
+    // usually is not, and a Glimmer outline around Material's teardrop handles
+    // and Cut/Copy/Paste menu is somebody else's fingerprints on the screen.
+    testWidgets('a field installs its own handles, menu and magnifier',
+        (tester) async {
+      await tester.pumpWidget(
+        const MaterialGlimmerApp(
+          home: GlimmerScaffold(body: GlimmerTextField(hint: 'Add an item')),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.selectionControls, same(GlimmerTextSelection.controls));
+      expect(field.contextMenuBuilder, GlimmerTextSelection.contextMenuBuilder);
+      expect(
+        field.magnifierConfiguration,
+        same(GlimmerTextSelection.magnifier),
+      );
+      expect(
+        field.selectionControls,
+        isNot(isA<MaterialTextSelectionControls>()),
+      );
+    });
+
+    testWidgets('a handle is drawn rather than borrowed', (tester) async {
+      expect(
+        GlimmerTextSelection.controls.getHandleSize(20),
+        const Size(
+          GlimmerTextSelection.handleSize * 2,
+          GlimmerTextSelection.handleSize * 2,
+        ),
+      );
+
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: Builder(
+              builder: (context) => GlimmerTextSelection.controls.buildHandle(
+                context,
+                TextSelectionHandleType.left,
+                20,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(CustomPaint), findsWidgets);
+    });
+
+    testWidgets('the selection menu is a glass panel', (tester) async {
+      var cut = 0;
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: GlimmerTextSelectionMenu(
+              anchors: const TextSelectionToolbarAnchors(
+                primaryAnchor: Offset(200, 300),
+              ),
+              buttonItems: [
+                ContextMenuButtonItem(
+                  type: ContextMenuButtonType.cut,
+                  onPressed: () => cut++,
+                ),
+                ContextMenuButtonItem(
+                  type: ContextMenuButtonType.copy,
+                  onPressed: () {},
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Cut'), findsOneWidget);
+      expect(find.text('Copy'), findsOneWidget);
+
+      // A glass panel, not one of Material's toolbars.
+      expect(
+        find.ancestor(
+          of: find.text('Cut'),
+          matching: find.byType(GlimmerSurface),
+        ),
+        findsOneWidget,
+      );
+      expect(find.byType(TextSelectionToolbar), findsNothing);
+      expect(find.byType(AdaptiveTextSelectionToolbar), findsNothing);
+
+      await tester.tap(find.text('Cut'));
+      expect(cut, 1);
+    });
+
+    testWidgets('the theme carries the focal colour into selection',
+        (tester) async {
+      final theme = GlimmerTheme.dark();
+      final tokens = theme.extension<GlimmerTokens>()!;
+      expect(theme.textSelectionTheme.cursorColor, tokens.colors.primary);
+      expect(
+        theme.textSelectionTheme.selectionHandleColor,
+        tokens.colors.primary,
+      );
+      expect(theme.textSelectionTheme.selectionColor!.a, closeTo(0.3, 1e-6));
+    });
+  });
 }

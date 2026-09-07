@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'glimmer_icon_button.dart';
 import 'glimmer_motion.dart';
+import 'glimmer_text_selection.dart';
 import 'glimmer_theme.dart';
 
 /// A text field styled to match Glimmer.
@@ -125,6 +126,12 @@ class _GlimmerTextFieldState extends State<GlimmerTextField> {
                 focusNode: _focusNode,
                 autofocus: widget.autofocus,
                 textInputAction: widget.textInputAction,
+                // The part a finger actually touches. Without these the field
+                // has a Glimmer outline and Material's handles, menu and
+                // magnifier inside it.
+                selectionControls: GlimmerTextSelection.controls,
+                contextMenuBuilder: GlimmerTextSelection.contextMenuBuilder,
+                magnifierConfiguration: GlimmerTextSelection.magnifier,
                 onChanged: widget.onChanged,
                 onSubmitted: widget.onSubmitted,
                 obscureText: widget.obscureText,

@@ -62,6 +62,7 @@ export 'src/glimmer_slider.dart';
 export 'src/glimmer_snackbar.dart';
 export 'src/glimmer_surface.dart';
 export 'src/glimmer_text.dart';
+export 'src/glimmer_text_selection.dart';
 export 'src/glimmer_theme.dart';
 export 'src/glimmer_title_chip.dart';
 export 'src/glimmer_tone.dart';

@@ -195,7 +195,8 @@ Navigator.of(context).push(
 **Input.**
 `GlimmerTextField` · `GlimmerSearchField` · `GlimmerSwitch` ·
 `GlimmerCheckbox` · `GlimmerRadio` · `GlimmerTabs` · `GlimmerSlider` ·
-`GlimmerProgressBar` · `GlimmerCircularProgress`
+`GlimmerProgressBar` · `GlimmerCircularProgress` · `GlimmerTextSelection` ·
+`GlimmerTextSelectionMenu`
 
 **Overlays.**
 `showGlimmerDialog` · `showGlimmerBottomSheet` · `showGlimmerSnackbar` ·
@@ -234,6 +235,12 @@ Minimum touch heights do not change with it. A medium button is 48, a large one
   surface that has to appear.
 - **No assets.** Type is whatever `fontFamily` you pass, or the platform
   default.
+- **Editing is ours too.** A field's handles, selection menu and magnifier
+  normally come from whichever design system it was built on, so a Glimmer
+  outline ends up around Material's teardrops. `GlimmerTextField` installs
+  round lit handles, a glass menu and a magnifier with the same graded edge.
+  Pass `GlimmerTextSelection.controls`, `.contextMenuBuilder` and `.magnifier`
+  to a plain `TextField` to get them there too.
 
 ## License
 
