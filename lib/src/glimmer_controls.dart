@@ -614,29 +614,34 @@ class _GlimmerRingPainter extends CustomPainter {
     }
 
     // A quarter of the ring, travelling, tapered at both ends.
+    //
+    // Drawn as a run of short segments rather than as one arc under a sweep
+    // gradient. A sweep gradient has to be rotated into place to line its
+    // stops up with the arc, and when that rotation is even slightly off the
+    // bright part of the gradient sits somewhere the arc is not, so nothing
+    // shows at all. Segments cannot drift.
     const arc = math.pi / 2;
+    const segments = 14;
     final start = top + (sweep * 2 * math.pi);
-    canvas.drawArc(
-      rect,
-      start,
-      arc,
-      false,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth
-        ..strokeCap = StrokeCap.round
-        ..shader = SweepGradient(
-          startAngle: 0,
-          endAngle: 2 * math.pi,
-          transform: GradientRotation(start),
-          colors: [
-            active.withValues(alpha: 0),
-            Color.lerp(active, const Color(0xFFFFFFFF), 0.4)!,
-            active.withValues(alpha: 0),
-          ],
-          stops: const [0, 0.125, 0.25],
-        ).createShader(rect),
-    );
+    const step = arc / segments;
+
+    for (var i = 0; i < segments; i++) {
+      // Nothing at either end, brightest in the middle.
+      final t = (i + 0.5) / segments;
+      final taper = math.sin(t * math.pi);
+      canvas.drawArc(
+        rect,
+        start + (i * step),
+        step * 1.08,
+        false,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = strokeWidth
+          ..strokeCap = StrokeCap.round
+          ..color = Color.lerp(active, const Color(0xFFFFFFFF), taper * 0.4)!
+              .withValues(alpha: taper),
+      );
+    }
   }
 
   @override
