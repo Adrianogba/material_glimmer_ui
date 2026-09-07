@@ -102,7 +102,9 @@ class GlimmerBackdrop extends StatelessWidget {
         if (dim > 0)
           Positioned.fill(
             child: ColoredBox(
-              color: const Color(0xFF000000).withValues(alpha: dim),
+              // Toward the ground, not toward black. Dimming a light screen
+              // with black is a bruise, the same way a black modal scrim was.
+              color: palette.background.withValues(alpha: dim),
             ),
           ),
       ],

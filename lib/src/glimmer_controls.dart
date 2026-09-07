@@ -391,6 +391,7 @@ class _GlimmerProgressBarState extends State<GlimmerProgressBar>
               track: colors.surface,
               active: colors.primary,
               edge: colors.outline,
+              tint: colors.highlightTint,
             ),
           ),
         ),
@@ -406,6 +407,7 @@ class _GlimmerProgressPainter extends CustomPainter {
     required this.track,
     required this.active,
     required this.edge,
+    required this.tint,
   });
 
   final double? value;
@@ -413,6 +415,12 @@ class _GlimmerProgressPainter extends CustomPainter {
   final Color track;
   final Color active;
   final Color edge;
+
+  /// Which way contrast runs on this ground. See
+  /// [GlimmerColors.highlightTint]: the crest of a highlight is a step toward
+  /// this, not a step toward white, because on a light track a whiter blue is
+  /// less visible rather than more.
+  final Color tint;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -472,8 +480,7 @@ class _GlimmerProgressPainter extends CustomPainter {
           end: Alignment.centerRight,
           colors: [
             active.withValues(alpha: 0),
-            Color.lerp(active, const Color(0xFFFFFFFF), 0.5)!
-                .withValues(alpha: 0.9),
+            Color.lerp(active, tint, 0.5)!.withValues(alpha: 0.9),
           ],
         ).createShader(Rect.fromLTWH(width - reach, 0, reach, size.height)),
     );
@@ -498,7 +505,7 @@ class _GlimmerProgressPainter extends CustomPainter {
           colors: [
             active.withValues(alpha: 0),
             active,
-            Color.lerp(active, const Color(0xFFFFFFFF), 0.45)!,
+            Color.lerp(active, tint, 0.45)!,
             active,
             active.withValues(alpha: 0),
           ],
@@ -513,7 +520,8 @@ class _GlimmerProgressPainter extends CustomPainter {
       old.sweep != sweep ||
       old.track != track ||
       old.active != active ||
-      old.edge != edge;
+      old.edge != edge ||
+      old.tint != tint;
 }
 
 /// A ring of light, for progress with no bar to put it in.
@@ -606,6 +614,7 @@ class _GlimmerCircularProgressState extends State<GlimmerCircularProgress>
               track: colors.surface,
               active: colors.primary,
               edge: colors.outline,
+              tint: colors.highlightTint,
             ),
           ),
         ),
@@ -622,6 +631,7 @@ class _GlimmerRingPainter extends CustomPainter {
     required this.track,
     required this.active,
     required this.edge,
+    required this.tint,
   });
 
   final double? value;
@@ -630,6 +640,9 @@ class _GlimmerRingPainter extends CustomPainter {
   final Color track;
   final Color active;
   final Color edge;
+
+  /// Which way contrast runs on this ground.
+  final Color tint;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -679,7 +692,7 @@ class _GlimmerRingPainter extends CustomPainter {
             colors: [
               active.withValues(alpha: 0.35),
               active,
-              Color.lerp(active, const Color(0xFFFFFFFF), 0.5)!,
+              Color.lerp(active, tint, 0.5)!,
             ],
             stops: [
               0,
@@ -716,8 +729,8 @@ class _GlimmerRingPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = strokeWidth
           ..strokeCap = StrokeCap.round
-          ..color = Color.lerp(active, const Color(0xFFFFFFFF), taper * 0.4)!
-              .withValues(alpha: taper),
+          ..color =
+              Color.lerp(active, tint, taper * 0.4)!.withValues(alpha: taper),
       );
     }
   }
@@ -729,7 +742,8 @@ class _GlimmerRingPainter extends CustomPainter {
       old.strokeWidth != strokeWidth ||
       old.track != track ||
       old.active != active ||
-      old.edge != edge;
+      old.edge != edge ||
+      old.tint != tint;
 }
 
 /// A field for searching, with a clear button once there is something in it.

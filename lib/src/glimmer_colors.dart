@@ -85,6 +85,25 @@ class GlimmerColors {
   /// The foreground drawn on [surface] and [background].
   final Color onSurface;
 
+  /// Which way contrast runs on this ground.
+  ///
+  /// White on a dark ground and ink on a light one. Almost every highlight in
+  /// the kit is a step toward this colour, and that is exactly why it cannot be
+  /// written as a constant: brightening is how light reads against black, and
+  /// against white the same move makes a thing disappear. A white flash on a
+  /// white surface is not a highlight, it is nothing happening.
+  ///
+  /// Use it for anything meant to stand out against the ground. Something
+  /// standing out against a saturated fill of its own, such as the shine on a
+  /// slider's thumb, is a different question and can stay white.
+  Color get highlightTint => brightness == Brightness.dark
+      ? const Color(0xFFFFFFFF)
+      : const Color(0xFF101418);
+
+  /// [base] pushed [amount] of the way toward [highlightTint].
+  Color highlight(Color base, double amount) =>
+      Color.lerp(base, highlightTint, amount)!;
+
   /// The palette re-grounded for a light background.
   ///
   /// The hues are the dark palette's. Only lightness moves, far enough that

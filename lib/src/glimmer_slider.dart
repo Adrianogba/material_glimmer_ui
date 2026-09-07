@@ -162,6 +162,7 @@ class _GlimmerSliderState extends State<GlimmerSlider>
                     track: colors.surface,
                     active: colors.primary,
                     edge: colors.outline,
+                    tint: colors.highlightTint,
                   ),
                 ),
               ),
@@ -175,6 +176,7 @@ class _GlimmerSliderState extends State<GlimmerSlider>
 
 class _GlimmerSliderPainter extends CustomPainter {
   const _GlimmerSliderPainter({
+    required this.tint,
     required this.fraction,
     required this.held,
     required this.pressed,
@@ -189,6 +191,13 @@ class _GlimmerSliderPainter extends CustomPainter {
   final Color track;
   final Color active;
   final Color edge;
+
+  /// Which way contrast runs on this ground. See
+  /// [GlimmerColors.highlightTint]. The shine across the thumb stays white
+  /// either way, because it sits on a saturated fill rather than on the page;
+  /// the press flash does not, because a white flash on a light ground is
+  /// nothing happening.
+  final Color tint;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -281,8 +290,9 @@ class _GlimmerSliderPainter extends CustomPainter {
         centre,
         thumbSize / 2,
         Paint()
-          ..color = const Color(0xFFFFFFFF).withValues(
-            alpha: GlimmerMotion.pressedOverlayOpacity,
+          ..color = tint.withValues(
+            alpha: GlimmerMotion.pressedOverlayOpacity *
+                (tint.computeLuminance() > 0.5 ? 1 : 0.7),
           ),
       );
     }
@@ -295,5 +305,6 @@ class _GlimmerSliderPainter extends CustomPainter {
       old.pressed != pressed ||
       old.track != track ||
       old.active != active ||
-      old.edge != edge;
+      old.edge != edge ||
+      old.tint != tint;
 }

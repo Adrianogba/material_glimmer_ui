@@ -121,6 +121,14 @@ adding to it. Timing, spacing, depth and the graded edge are identical in both.
 `MaterialGlimmerApp` builds both always, so `themeMode: ThemeMode.system` works
 with no other change.
 
+One rule holds the light theme together, and it is worth knowing if you extend
+the kit. Almost every highlight here is a step toward `GlimmerColors.highlightTint`,
+which is white on a dark ground and ink on a light one. Brightening is how light
+reads against black; against white the same move makes a thing disappear. Use
+`colors.highlight(base, amount)` rather than lerping toward a hardcoded white,
+unless what you are highlighting sits on a saturated fill of its own rather than
+on the page.
+
 ## Additive surfaces
 
 On dark, a surface paints its fill with `BlendMode.plus`, adding light rather
@@ -247,7 +255,7 @@ Minimum touch heights do not change with it. A medium button is 48, a large one
 
 ## What it was read against
 
-[docs/reference.md](docs/reference.md) records the exact upstream revision the
+[doc/reference.md](doc/reference.md) records the exact upstream revision the
 ideas were read from: the git tree and blob ids of every file, and the date.
 `tool/fetch_reference.py` refreshes both the local mirror and that record. The
 mirror itself is not committed and not published, because it is Google's code

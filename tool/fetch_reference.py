@@ -1,5 +1,5 @@
 """Mirror the androidx.xr.glimmer sources into reference/, and record what was
-read into docs/reference.md.
+read into doc/reference.md.
 
 Run from the package root:
 
@@ -8,7 +8,7 @@ Run from the package root:
 
 The mirror is Google's code under Apache 2.0, not ours, so reference/ is in
 both .gitignore and .pubignore. It exists only as a local reading copy while
-working on the kit. docs/reference.md is ours and is committed: it is the note
+working on the kit. doc/reference.md is ours and is committed: it is the note
 of which revision was read, so a later reader can tell whether this package was
 compared against the same upstream they are looking at.
 
@@ -33,7 +33,7 @@ BASE = (
     "androidx-main/xr/glimmer"
 )
 OUT = os.path.join("reference", "androidx-glimmer")
-RECORD = os.path.join("docs", "reference.md")
+RECORD = os.path.join("doc", "reference.md")
 ROOTS = [
     "/glimmer/src/main/java/androidx/xr/glimmer",
     "/glimmer/api",

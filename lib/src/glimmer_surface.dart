@@ -251,6 +251,7 @@ class _GlimmerSurfaceState extends State<GlimmerSurface>
     required Color? override,
     required Color? fill,
     required Brightness brightness,
+    required Color highlightTint,
   }) {
     final GlimmerEdge idle;
     if (override != null) {
@@ -264,7 +265,7 @@ class _GlimmerSurfaceState extends State<GlimmerSurface>
       // A surface with a fill of its own gets an edge derived from that fill,
       // so the border reads as light landing on the colour rather than as a
       // grey ring with a colour of its own.
-      idle = GlimmerEdge.onFill(fill);
+      idle = GlimmerEdge.onFill(fill, highlight: highlightTint);
     } else {
       idle = brightness == Brightness.dark
           ? const GlimmerEdge.idle()
@@ -398,6 +399,7 @@ class _GlimmerSurfaceState extends State<GlimmerSurface>
                       fill:
                           widget.color == colors.surface ? null : widget.color,
                       brightness: colors.brightness,
+                      highlightTint: colors.highlightTint,
                     ).scaleAlpha(entrance),
                     // The soft pass is a bloom, and a bloom made of light sits
                     // well on a dark ground. On a light one the same pass is
@@ -414,9 +416,7 @@ class _GlimmerSurfaceState extends State<GlimmerSurface>
                     // The press flash has to go the other way on a light
                     // ground. Ink reads stronger than light does, so it is
                     // held back a little.
-                    pressedColor: colors.brightness == Brightness.dark
-                        ? const Color(0xFFFFFFFF)
-                        : const Color(0xFF101418),
+                    pressedColor: colors.highlightTint,
                     pressedOpacity: GlimmerMotion.pressedOverlayOpacity *
                         pressed *
                         (colors.brightness == Brightness.dark ? 1 : 0.7),

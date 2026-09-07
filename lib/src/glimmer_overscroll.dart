@@ -128,6 +128,7 @@ class _GlimmerOverscrollIndicatorState extends State<GlimmerOverscrollIndicator>
         foregroundPainter: _GlimmerOverscrollPainter(
           axisDirection: widget.axisDirection,
           color: widget.color ?? colors.primary,
+          tint: colors.highlightTint,
           leading: _leading.value.clamp(0.0, 1.0),
           trailing: _trailing.value.clamp(0.0, 1.0),
         ),
@@ -141,12 +142,17 @@ class _GlimmerOverscrollPainter extends CustomPainter {
   const _GlimmerOverscrollPainter({
     required this.axisDirection,
     required this.color,
+    required this.tint,
     required this.leading,
     required this.trailing,
   });
 
   final AxisDirection axisDirection;
   final Color color;
+
+  /// Which way contrast runs on this ground. See
+  /// [GlimmerColors.highlightTint].
+  final Color tint;
   final double leading;
   final double trailing;
 
@@ -248,8 +254,7 @@ class _GlimmerOverscrollPainter extends CustomPainter {
           end: vertical ? Alignment.centerRight : Alignment.bottomCenter,
           colors: [
             color.withValues(alpha: 0),
-            Color.lerp(color, const Color(0xFFFFFFFF), 0.45)!
-                .withValues(alpha: 0.95 * strength),
+            Color.lerp(color, tint, 0.45)!.withValues(alpha: 0.95 * strength),
             color.withValues(alpha: 0),
           ],
           stops: const [0, 0.5, 1],
@@ -269,6 +274,7 @@ class _GlimmerOverscrollPainter extends CustomPainter {
       old.leading != leading ||
       old.trailing != trailing ||
       old.color != color ||
+      old.tint != tint ||
       old.axisDirection != axisDirection;
 }
 
@@ -430,6 +436,7 @@ class _GlimmerRefreshIndicatorState extends State<GlimmerRefreshIndicator>
           foregroundPainter: _GlimmerOverscrollPainter(
             axisDirection: AxisDirection.down,
             color: widget.color ?? colors.primary,
+            tint: colors.highlightTint,
             leading: _strength,
             trailing: 0,
           ),

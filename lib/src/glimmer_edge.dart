@@ -83,13 +83,20 @@ class GlimmerEdge {
   /// landing on it.
   ///
   /// This derives the edge from the fill instead, and keeps every stop
-  /// translucent so the fill stays the colour you see. The lit corner is a white
-  /// highlight, the corner beside it lifts the fill's own tone, and the far side
-  /// drops it.
-  factory GlimmerEdge.onFill(Color fill) {
+  /// translucent so the fill stays the colour you see. The lit corner is a
+  /// highlight, the corner beside it lifts the fill's own tone, and the far
+  /// side drops it.
+  ///
+  /// [highlight] is which way contrast runs on the ground this sits on, from
+  /// [GlimmerColors.highlightTint]. White is right against black and invisible
+  /// against white, so a fill on a light theme gets an ink highlight instead.
+  factory GlimmerEdge.onFill(
+    Color fill, {
+    Color highlight = const Color(0xFFFFFFFF),
+  }) {
     final tone = fill.tone;
     return GlimmerEdge(
-      topLeft: const Color(0xFFFFFFFF).withValues(alpha: 0.55),
+      topLeft: highlight.withValues(alpha: 0.55),
       topRight: fill.withTone(math.min(100, tone + 14)).withValues(alpha: 0.4),
       bottomRight: fill.withTone(math.max(0, tone - 16)).withValues(alpha: 0.3),
       bottomLeft: fill.withTone(math.max(0, tone - 6)).withValues(alpha: 0.36),

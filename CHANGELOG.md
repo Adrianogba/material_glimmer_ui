@@ -11,6 +11,13 @@ First release.
 
 - `MaterialGlimmerApp` and `MaterialGlimmerApp.router`, the application widget,
   alongside `MaterialApp` and `CupertinoApp`.
+- `GlimmerColors.highlightTint` and `GlimmerColors.highlight`, the rule the
+  light theme was missing. White on a dark ground, ink on a light one, and
+  every highlight in the kit is a step toward it: the press flash, the crest of
+  the progress bar and the circular ring, the overscroll line, the edge over a
+  caller's fill, and the backdrop's dim. Each of those was a value chosen as
+  "light against black" and written as a constant, which on white means nothing
+  at all.
 - A light-ground edge as well as a dark one, for both the resting and the
   focused states. White at the lit corner is right against black and nothing
   at all against white, so on a light theme the ring used to break wherever
