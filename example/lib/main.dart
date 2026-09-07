@@ -544,11 +544,11 @@ class _ComponentsPageState extends State<_ComponentsPage> {
         SizedBox(height: spacing.large),
         const GlimmerDivider(),
         SizedBox(height: spacing.large),
-        GlimmerExpansionTile(
+        const GlimmerExpansionTile(
           label: 'Delivery',
           supportingLabel: 'Thursday, before noon',
           leadingIcon: Icons.local_shipping_outlined,
-          children: const [
+          children: [
             GlimmerListItem(
               label: 'Leave with a neighbour',
               leadingIcon: Icons.home_outlined,

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_glimmer_ui/material_glimmer_ui.dart';
 import 'package:material_glimmer_ui_example/main.dart';
@@ -37,28 +38,27 @@ void main() {
     await tester.tap(find.text('Foundations'));
     await tester.pump(const Duration(seconds: 1));
 
-    expect(find.text('SCALE'), findsOneWidget);
+    // The depth section is below the fold, and a ListView does not build what
+    // it has not reached.
     expect(find.text('COLOUR'), findsOneWidget);
+    expect(find.text('TYPE'), findsOneWidget);
   });
 
-  testWidgets('the scale toggle re-themes the whole gallery', (tester) async {
+  testWidgets('the top bar toggle re-themes the whole gallery', (tester) async {
     await tester.pumpWidget(const MaterialGlimmerGallery());
     await tester.pump(const Duration(seconds: 1));
-    await tester.tap(find.text('Foundations'));
-    await tester.pump(const Duration(seconds: 1));
 
-    GlimmerScale scaleInScope() =>
-        GlimmerTheme.of(tester.element(find.text('SCALE'))).scale;
+    Brightness brightnessInScope() =>
+        GlimmerTheme.of(tester.element(find.text('GLASS'))).colors.brightness;
 
-    expect(scaleInScope(), GlimmerScale.mobile);
-    final before = tester.getSize(find.text('SCALE')).height;
+    expect(brightnessInScope(), Brightness.dark);
 
-    await tester.tap(find.text('Glasses'));
+    await tester.tap(find.byIcon(Icons.dark_mode_outlined));
     // One frame to commit the setState, then past the theme transition.
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
 
-    expect(scaleInScope(), GlimmerScale.glasses);
-    expect(tester.getSize(find.text('SCALE')).height, greaterThan(before));
+    expect(brightnessInScope(), Brightness.light);
+    expect(find.byIcon(Icons.light_mode_outlined), findsOneWidget);
   });
 }
