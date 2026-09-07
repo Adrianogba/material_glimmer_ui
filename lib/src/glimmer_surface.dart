@@ -32,8 +32,10 @@ import 'glimmer_tone.dart';
 ///  * **Focused.** Over 800 ms the edge grows to 2 px and turns the focal
 ///    colour and the tint brightens, so the surface reads as turning toward
 ///    the light. Leaving focus takes 500 ms.
-///  * **Pressed.** A white overlay at 16%, sprung in and out, held for at least
-///    300 ms so a quick tap is still seen.
+///  * **Pressed.** An overlay at 16%, sprung in and out, held for at least
+///    300 ms so a quick tap is still seen. White on a dark ground, ink on a
+///    light one: a white flash on a white surface is not a press state, it is
+///    nothing happening.
 ///
 /// There is no roving focus, so [focused] is driven by whatever selection your
 /// screen already has. Keyboard focus feeds into the same treatment for anyone
@@ -409,8 +411,15 @@ class _GlimmerSurfaceState extends State<GlimmerSurface>
                     )!,
                     focusProgress: focusProgress,
                     ambient: ambient,
-                    pressedOpacity:
-                        GlimmerMotion.pressedOverlayOpacity * pressed,
+                    // The press flash has to go the other way on a light
+                    // ground. Ink reads stronger than light does, so it is
+                    // held back a little.
+                    pressedColor: colors.brightness == Brightness.dark
+                        ? const Color(0xFFFFFFFF)
+                        : const Color(0xFF101418),
+                    pressedOpacity: GlimmerMotion.pressedOverlayOpacity *
+                        pressed *
+                        (colors.brightness == Brightness.dark ? 1 : 0.7),
                   ),
                   // A surface is a pane, not a decoration: a touch that lands
                   // on it stops there even where the content has a gap. The
@@ -520,6 +529,7 @@ class _GlimmerSurfaceEdge extends CustomPainter {
     required this.focusProgress,
     required this.ambient,
     required this.pressedOpacity,
+    this.pressedColor = const Color(0xFFFFFFFF),
     this.bloom = 1,
   });
 
@@ -529,6 +539,9 @@ class _GlimmerSurfaceEdge extends CustomPainter {
   final double focusProgress;
   final double ambient;
   final double pressedOpacity;
+
+  /// What the press flash is made of. White on a dark ground, ink on a light.
+  final Color pressedColor;
 
   /// How strongly the soft pass reads, from 0 to 1.
   final double bloom;
@@ -541,8 +554,7 @@ class _GlimmerSurfaceEdge extends CustomPainter {
     if (pressedOpacity > 0) {
       canvas.drawRRect(
         rrect,
-        Paint()
-          ..color = const Color(0xFFFFFFFF).withValues(alpha: pressedOpacity),
+        Paint()..color = pressedColor.withValues(alpha: pressedOpacity),
       );
     }
 
@@ -614,6 +626,7 @@ class _GlimmerSurfaceEdge extends CustomPainter {
       old.focusProgress != focusProgress ||
       old.ambient != ambient ||
       old.pressedOpacity != pressedOpacity ||
+      old.pressedColor != pressedColor ||
       old.bloom != bloom;
 }
 

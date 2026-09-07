@@ -25,6 +25,7 @@ class GlimmerScaffold extends StatelessWidget {
     this.navigationItems = const [],
     this.selectedIndex = 0,
     this.onNavigationChanged,
+    this.floatingAction,
     this.backgroundColor,
   });
 
@@ -46,6 +47,14 @@ class GlimmerScaffold extends StatelessWidget {
 
   /// A widget at the start of the top bar, replacing the accent mark.
   final Widget? leading;
+
+  /// The one action that matters on this screen, usually a [GlimmerFab].
+  ///
+  /// It sits at the end of the body, above the navigation strip, so the strip
+  /// and the gesture bar stay clear of it. It floats over the body rather than
+  /// taking space from it, so leave room at the end of a scrolling body or the
+  /// last thing in it will sit under the button.
+  final Widget? floatingAction;
 
   /// The bottom navigation destinations. Without any the strip is omitted.
   final List<GlimmerNavigationItem> navigationItems;
@@ -103,7 +112,20 @@ class GlimmerScaffold extends StatelessWidget {
                         action: action,
                         leading: leading,
                       ),
-                    Expanded(child: body),
+                    Expanded(
+                      child: floatingAction == null
+                          ? body
+                          : Stack(
+                              children: [
+                                Positioned.fill(child: body),
+                                Positioned(
+                                  right: tokens.spacing.large,
+                                  bottom: tokens.spacing.large,
+                                  child: floatingAction!,
+                                ),
+                              ],
+                            ),
+                    ),
                     if (navigationItems.isNotEmpty)
                       Padding(
                         padding: EdgeInsets.fromLTRB(

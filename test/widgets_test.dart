@@ -2683,4 +2683,223 @@ void main() {
       }
     });
   });
+
+  group('fab', () {
+    testWidgets('round without a label, extended with one', (tester) async {
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: const SizedBox(),
+            floatingAction: GlimmerFab(
+              icon: Icons.add,
+              tooltip: 'Add an item',
+              onPressed: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final round = tester.getSize(find.byType(GlimmerFab));
+      expect(round.width, GlimmerFab.size);
+      expect(round.height, GlimmerFab.size);
+      expect(find.text('Add an item'), findsNothing);
+
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: const SizedBox(),
+            floatingAction: GlimmerFab(
+              icon: Icons.add,
+              label: 'Add an item',
+              onPressed: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Add an item'), findsOneWidget);
+      expect(
+        tester.getSize(find.byType(GlimmerFab)).width,
+        greaterThan(GlimmerFab.size),
+      );
+    });
+
+    testWidgets('the scaffold keeps it clear of the navigation strip',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: const SizedBox(),
+            navigationItems: const [
+              GlimmerNavigationItem(label: 'One', icon: Icons.home),
+              GlimmerNavigationItem(label: 'Two', icon: Icons.settings),
+            ],
+            floatingAction: GlimmerFab(icon: Icons.add, onPressed: () {}),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final fab = tester.getRect(find.byType(GlimmerFab));
+      final strip = tester.getRect(find.text('One'));
+      expect(fab.bottom, lessThanOrEqualTo(strip.top));
+    });
+
+    testWidgets('a disabled fab is inert and dimmed', (tester) async {
+      await tester.pumpWidget(
+        const MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: SizedBox(),
+            floatingAction: GlimmerFab(icon: Icons.add, onPressed: null),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final surface = tester.widget<GlimmerSurface>(
+        find.descendant(
+          of: find.byType(GlimmerFab),
+          matching: find.byType(GlimmerSurface),
+        ),
+      );
+      expect(surface.onTap, isNull);
+    });
+  });
+
+  group('switch', () {
+    testWidgets('the track is a surface that takes the focus treatment',
+        (tester) async {
+      var value = false;
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: StatefulBuilder(
+              builder: (context, setState) => GlimmerSwitch(
+                value: value,
+                label: 'Immersive',
+                onChanged: (next) => setState(() => value = next),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      GlimmerSurface track() => tester.widget<GlimmerSurface>(
+            find.descendant(
+              of: find.byType(GlimmerSwitch),
+              matching: find.byType(GlimmerSurface),
+            ),
+          );
+
+      expect(track().focused, isFalse);
+      // The track is glass with a lit edge, not a filled capsule.
+      expect(track().color, isNull);
+
+      await tester.tap(find.byType(GlimmerSwitch));
+      await tester.pumpAndSettle();
+
+      expect(value, isTrue);
+      expect(track().focused, isTrue);
+    });
+
+    testWidgets('a disabled switch is dimmed rather than hidden',
+        (tester) async {
+      await tester.pumpWidget(
+        const MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: GlimmerSwitch(value: true, onChanged: null),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final opacity = tester.widget<AnimatedOpacity>(
+        find.descendant(
+          of: find.byType(GlimmerSwitch),
+          matching: find.byType(AnimatedOpacity),
+        ),
+      );
+      expect(opacity.opacity, lessThan(1));
+      expect(opacity.opacity, greaterThan(0));
+    });
+  });
+
+  group('bottom inset', () {
+    // A message about something you just did inside a sheet, printed across
+    // the middle of that sheet, reads as part of it rather than as a reply.
+    testWidgets('a message clears a sheet that is already open',
+        (tester) async {
+      late BuildContext sheetContext;
+
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: Builder(
+              builder: (context) => GlimmerButton(
+                label: 'Open',
+                onPressed: () => showGlimmerBottomSheet<void>(
+                  context: context,
+                  builder: (context) {
+                    sheetContext = context;
+                    return const GlimmerBottomSheet(
+                      title: 'Sort the market list',
+                      child: SizedBox(height: 220, child: Text('By aisle')),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      final sheet = tester.getRect(find.byType(GlimmerBottomSheet));
+
+      showGlimmerSnackbar(sheetContext, message: 'Added to the list');
+      await tester.pumpAndSettle();
+
+      final pill = tester.getRect(find.byType(GlimmerSnackbar));
+      expect(
+        pill.bottom,
+        lessThanOrEqualTo(sheet.top),
+        reason: 'the message should sit above the sheet, not on it',
+      );
+
+      // Let the message time itself out rather than leaving its timer pending.
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('and sits at the bottom again once the sheet closes',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: Builder(
+              builder: (context) => GlimmerButton(
+                label: 'Message',
+                onPressed: () => showGlimmerSnackbar(context, message: 'Saved'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Message'));
+      await tester.pumpAndSettle();
+
+      final pill = tester.getRect(find.byType(GlimmerSnackbar));
+      final screen = tester.getSize(find.byType(GlimmerScaffold));
+      expect(screen.height - pill.bottom, lessThan(80));
+
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+    });
+  });
 }

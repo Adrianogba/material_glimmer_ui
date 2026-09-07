@@ -182,7 +182,7 @@ Navigator.of(context).push(
 
 **Actions.**
 `GlimmerButton` · `GlimmerToggleButton` · `GlimmerButtonGroup` ·
-`GlimmerIconButton` · `GlimmerIconToggleButton`
+`GlimmerIconButton` · `GlimmerIconToggleButton` · `GlimmerFab`
 
 **Content.**
 `GlimmerText` · `GlimmerIcon` · `GlimmerTitleChip` · `GlimmerChip` ·
@@ -203,7 +203,8 @@ Navigator.of(context).push(
 **Overlays.**
 `showGlimmerDialog` · `showGlimmerBottomSheet` · `showGlimmerSnackbar` ·
 `showGlimmerMenu` · `GlimmerDialog` · `GlimmerBottomSheet` ·
-`GlimmerSnackbar` · `GlimmerMenu` · `GlimmerModalScrim`
+`GlimmerSnackbar` · `GlimmerMenu` · `GlimmerModalScrim` ·
+`GlimmerBottomInset`
 
 **Tokens and machinery.**
 `GlimmerTheme` · `GlimmerTokens` · `GlimmerColors` · `GlimmerTypography` ·
@@ -243,6 +244,14 @@ Minimum touch heights do not change with it. A medium button is 48, a large one
   round lit handles, a glass menu and a magnifier with the same graded edge.
   Pass `GlimmerTextSelection.controls`, `.contextMenuBuilder` and `.magnifier`
   to a plain `TextField` to get them there too.
+
+## What it was read against
+
+[docs/reference.md](docs/reference.md) records the exact upstream revision the
+ideas were read from: the git tree and blob ids of every file, and the date.
+`tool/fetch_reference.py` refreshes both the local mirror and that record. The
+mirror itself is not committed and not published, because it is Google's code
+under Apache 2.0 rather than ours.
 
 ## License
 

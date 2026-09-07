@@ -52,7 +52,6 @@ class _GalleryHomeState extends State<_GalleryHome> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      const _OverviewPage(),
       const _ComponentsPage(),
       const _FoundationsPage(),
     ];
@@ -86,10 +85,20 @@ class _GalleryHomeState extends State<_GalleryHome> {
         ],
       ),
       body: IndexedStack(index: _tab, children: pages),
+      floatingAction: GlimmerFab(
+        icon: Icons.add,
+        label: _tab == 0 ? 'Add an item' : null,
+        tooltip: 'Add an item',
+        onPressed: () => showGlimmerSnackbar(
+          context,
+          message: 'Nothing to add in a gallery',
+          icon: Icons.info_outline,
+          bottomInset: _navigationStripHeight,
+        ),
+      ),
       selectedIndex: _tab,
       onNavigationChanged: (value) => setState(() => _tab = value),
       navigationItems: const [
-        GlimmerNavigationItem(label: 'Overview', icon: Icons.explore_outlined),
         GlimmerNavigationItem(
             label: 'Components', icon: Icons.widgets_outlined),
         GlimmerNavigationItem(label: 'Foundations', icon: Icons.tune),
@@ -98,17 +107,156 @@ class _GalleryHomeState extends State<_GalleryHome> {
   }
 }
 
-class _OverviewPage extends StatefulWidget {
-  const _OverviewPage();
+class _ComponentsPage extends StatefulWidget {
+  const _ComponentsPage();
 
   @override
-  State<_OverviewPage> createState() => _OverviewPageState();
+  State<_ComponentsPage> createState() => _ComponentsPageState();
 }
 
-class _OverviewPageState extends State<_OverviewPage> {
+/// Roughly the height of the gallery's own navigation strip, so a message
+/// clears it instead of landing on top.
+const _navigationStripHeight = 76.0;
+
+class _ComponentsPageState extends State<_ComponentsPage> {
+  final _bought = <String>{};
   var _saved = false;
   var _stackIndex = 0;
   var _refreshed = false;
+  var _muted = false;
+  var _listening = true;
+  var _immersive = false;
+  var _progress = 0.4;
+  var _digest = true;
+  var _roast = 'Medium';
+  var _filter = 0;
+  var _query = '';
+  final _tags = <String>{'Open now'};
+  var _loading = true;
+
+  static const _pagerPages = <(String, String, IconData)>[
+    ('Museu do Café', 'Santos, open until five', Icons.museum_outlined),
+    ('Pinacoteca', 'Luz, new exhibition', Icons.palette_outlined),
+    ('Mercado Municipal', 'Centro, mortadella sandwich', Icons.storefront),
+  ];
+
+  static const _groceries = [
+    'Pão de queijo',
+    'Jabuticaba',
+    'Papaya',
+    'Kale',
+    'Coffee',
+  ];
+
+  Future<void> _openDialog(BuildContext context) async {
+    final leaving = await showGlimmerDialog<bool>(
+      context: context,
+      builder: (context) => GlimmerDialog(
+        icon: Icons.storefront,
+        title: 'Leave the queue?',
+        content: 'You are third in line at the Mercado Municipal.',
+        actions: [
+          GlimmerButton(
+            label: 'Stay',
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          GlimmerButton(
+            label: 'Leave',
+            prominent: true,
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
+      ),
+    );
+    if (leaving == true && context.mounted) {
+      showGlimmerSnackbar(
+        context,
+        message: 'You left the queue',
+        bottomInset: _navigationStripHeight,
+      );
+    }
+  }
+
+  Future<void> _openSheet(BuildContext context) async {
+    final choice = await showGlimmerBottomSheet<String>(
+      context: context,
+      builder: (context) => GlimmerBottomSheet(
+        title: 'Sort the market list',
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final option in const ['By aisle', 'By price', 'Alphabetical'])
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: GlimmerListItem(
+                  label: option,
+                  leadingIcon: Icons.sort,
+                  onTap: () => Navigator.of(context).pop(option),
+                ),
+              ),
+            // Raised from inside the sheet, so the sheet is still there when
+            // the message lands. That is what the bottom inset is for.
+            GlimmerListItem(
+              label: 'Save this order',
+              supportingLabel: 'The sheet stays open',
+              leadingIcon: Icons.bookmark_add_outlined,
+              onTap: () => showGlimmerSnackbar(
+                context,
+                message: 'Added to the Saturday market list',
+                icon: Icons.check_circle_outline,
+                actionLabel: 'Undo',
+                onAction: () {},
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (choice != null && context.mounted) {
+      showGlimmerSnackbar(
+        context,
+        message: 'Sorted $choice',
+        bottomInset: _navigationStripHeight,
+      );
+    }
+  }
+
+  Future<void> _openMenu(BuildContext context) async {
+    final choice = await showGlimmerMenu<String>(
+      context: context,
+      items: const [
+        GlimmerMenuItem(
+          label: 'Share the list',
+          value: 'share',
+          icon: Icons.ios_share,
+        ),
+        GlimmerMenuItem(
+          label: 'Duplicate',
+          value: 'duplicate',
+          icon: Icons.copy_all_outlined,
+        ),
+        GlimmerMenuItem(
+          label: 'Not available offline',
+          value: 'offline',
+          icon: Icons.cloud_off,
+          enabled: false,
+        ),
+        GlimmerMenuItem(
+          label: 'Delete the list',
+          value: 'delete',
+          icon: Icons.delete_outline,
+          destructive: true,
+        ),
+      ],
+    );
+    if (choice != null && context.mounted) {
+      showGlimmerSnackbar(
+        context,
+        message: 'Chose $choice',
+        bottomInset: _navigationStripHeight,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -248,496 +396,356 @@ class _OverviewPageState extends State<_OverviewPage> {
               style: type.caption.copyWith(color: tokens.colors.outline),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
 
-class _ComponentsPage extends StatefulWidget {
-  const _ComponentsPage();
-
-  @override
-  State<_ComponentsPage> createState() => _ComponentsPageState();
-}
-
-/// Roughly the height of the gallery's own navigation strip, so a message
-/// clears it instead of landing on top.
-const _navigationStripHeight = 76.0;
-
-class _ComponentsPageState extends State<_ComponentsPage> {
-  final _bought = <String>{};
-  var _muted = false;
-  var _listening = true;
-  var _immersive = false;
-  var _progress = 0.4;
-  var _digest = true;
-  var _roast = 'Medium';
-  var _filter = 0;
-  var _query = '';
-  final _tags = <String>{'Open now'};
-  var _loading = true;
-
-  static const _pagerPages = <(String, String, IconData)>[
-    ('Museu do Café', 'Santos, open until five', Icons.museum_outlined),
-    ('Pinacoteca', 'Luz, new exhibition', Icons.palette_outlined),
-    ('Mercado Municipal', 'Centro, mortadella sandwich', Icons.storefront),
-  ];
-
-  static const _groceries = [
-    'Pão de queijo',
-    'Jabuticaba',
-    'Papaya',
-    'Kale',
-    'Coffee',
-  ];
-
-  Future<void> _openDialog(BuildContext context) async {
-    final leaving = await showGlimmerDialog<bool>(
-      context: context,
-      builder: (context) => GlimmerDialog(
-        icon: Icons.storefront,
-        title: 'Leave the queue?',
-        content: 'You are third in line at the Mercado Municipal.',
-        actions: [
-          GlimmerButton(
-            label: 'Stay',
-            onPressed: () => Navigator.of(context).pop(false),
-          ),
-          GlimmerButton(
-            label: 'Leave',
-            prominent: true,
-            onPressed: () => Navigator.of(context).pop(true),
-          ),
-        ],
-      ),
-    );
-    if (leaving == true && context.mounted) {
-      showGlimmerSnackbar(
-        context,
-        message: 'You left the queue',
-        bottomInset: _navigationStripHeight,
-      );
-    }
-  }
-
-  Future<void> _openSheet(BuildContext context) async {
-    final choice = await showGlimmerBottomSheet<String>(
-      context: context,
-      builder: (context) => GlimmerBottomSheet(
-        title: 'Sort the market list',
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final option in const ['By aisle', 'By price', 'Alphabetical'])
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: GlimmerListItem(
-                  label: option,
-                  leadingIcon: Icons.sort,
-                  onTap: () => Navigator.of(context).pop(option),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-    if (choice != null && context.mounted) {
-      showGlimmerSnackbar(
-        context,
-        message: 'Sorted $choice',
-        bottomInset: _navigationStripHeight,
-      );
-    }
-  }
-
-  Future<void> _openMenu(BuildContext context) async {
-    final choice = await showGlimmerMenu<String>(
-      context: context,
-      items: const [
-        GlimmerMenuItem(
-          label: 'Share the list',
-          value: 'share',
-          icon: Icons.ios_share,
-        ),
-        GlimmerMenuItem(
-          label: 'Duplicate',
-          value: 'duplicate',
-          icon: Icons.copy_all_outlined,
-        ),
-        GlimmerMenuItem(
-          label: 'Not available offline',
-          value: 'offline',
-          icon: Icons.cloud_off,
-          enabled: false,
-        ),
-        GlimmerMenuItem(
-          label: 'Delete the list',
-          value: 'delete',
-          icon: Icons.delete_outline,
-          destructive: true,
-        ),
-      ],
-    );
-    if (choice != null && context.mounted) {
-      showGlimmerSnackbar(
-        context,
-        message: 'Chose $choice',
-        bottomInset: _navigationStripHeight,
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = GlimmerTheme.of(context);
-    final spacing = tokens.spacing;
-
-    return ListView(
-      padding: EdgeInsets.fromLTRB(spacing.large, 24, spacing.large, 24),
-      children: [
-        const _SectionLabel('List with an integrated title'),
-        SizedBox(height: spacing.medium),
-        for (final item in _groceries) ...[
-          GlimmerListItem(
-            label: item,
-            leadingIcon: _bought.contains(item)
-                ? Icons.check_circle
-                : Icons.circle_outlined,
-            selected: _bought.contains(item),
-            onTap: () => setState(
-              () => _bought.contains(item)
-                  ? _bought.remove(item)
-                  : _bought.add(item),
-            ),
-          ),
+          SizedBox(height: spacing.extraLarge),
+          const _SectionLabel('List with an integrated title'),
           SizedBox(height: spacing.medium),
-        ],
-        SizedBox(height: spacing.large),
-        const _SectionLabel('Buttons'),
-        SizedBox(height: spacing.medium),
-        Wrap(
-          spacing: spacing.medium,
-          runSpacing: spacing.medium,
-          children: [
-            GlimmerButton(
-              label: 'Button',
-              leadingIcon: Icons.send_outlined,
-              onPressed: () {},
-            ),
-            GlimmerButton(
-                label: 'Prominent', prominent: true, onPressed: () {}),
-            const GlimmerButton(label: 'Disabled', onPressed: null),
-            GlimmerToggleButton(
-              label: _muted ? 'Muted' : 'Mute',
-              leadingIcon: _muted ? Icons.volume_off : Icons.volume_up,
-              selected: _muted,
-              onChanged: (value) => setState(() => _muted = value),
-            ),
-          ],
-        ),
-        SizedBox(height: spacing.medium),
-        GlimmerButton(
-          label: 'Large, for the one action that matters',
-          leadingIcon: Icons.navigation_outlined,
-          size: GlimmerButtonSize.large,
-          expand: true,
-          onPressed: () {},
-        ),
-        SizedBox(height: spacing.extraLarge),
-        const _SectionLabel('Pager'),
-        SizedBox(height: spacing.small),
-        Text(
-          'Pages shorten, blur and fade as they leave the centre.',
-          style:
-              tokens.typography.caption.copyWith(color: tokens.colors.outline),
-        ),
-        SizedBox(height: spacing.medium),
-        SizedBox(
-          height: 220,
-          child: GlimmerPager(
-            itemCount: _pagerPages.length,
-            itemBuilder: (context, page) => GlimmerCard(
-              title: _pagerPages[page].$1,
-              supportingText: _pagerPages[page].$2,
-              leadingIcon: _pagerPages[page].$3,
-            ),
-          ),
-        ),
-        SizedBox(height: spacing.extraLarge),
-        const _SectionLabel('Icon buttons and voice input'),
-        SizedBox(height: spacing.medium),
-        Row(
-          children: [
-            GlimmerIconButton(
-              icon: Icons.mic_none,
-              tooltip: 'Speak',
-              prominent: true,
-              onPressed: () => setState(() => _listening = !_listening),
-            ),
-            SizedBox(width: spacing.medium),
-            GlimmerIconToggleButton(
-              icon: Icons.bookmark_outline,
-              selectedIcon: Icons.bookmark,
-              selected: _bought.isNotEmpty,
-              tooltip: 'Bookmark',
-              onChanged: (_) => setState(_bought.clear),
-            ),
-            SizedBox(width: spacing.extraLarge),
-            GlimmerVoiceInputIndicator(listening: _listening),
-          ],
-        ),
-        SizedBox(height: spacing.extraLarge),
-        const _SectionLabel('Choosing'),
-        SizedBox(height: spacing.small),
-        Text(
-          'A tick that is drawn on, a dot that springs out, and a marker that '
-          'slides between choices.',
-          style:
-              tokens.typography.caption.copyWith(color: tokens.colors.outline),
-        ),
-        SizedBox(height: spacing.medium),
-        GlimmerCheckbox(
-          value: _digest,
-          label: 'Send me the weekly digest',
-          onChanged: (value) => setState(() => _digest = value),
-        ),
-        for (final roast in const ['Light', 'Medium', 'Dark'])
-          GlimmerRadio<String>(
-            value: roast,
-            groupValue: _roast,
-            label: '$roast roast',
-            onChanged: (value) => setState(() => _roast = value),
-          ),
-        SizedBox(height: spacing.medium),
-        GlimmerTabs(
-          labels: const ['All', 'Open', 'Closed'],
-          selectedIndex: _filter,
-          onChanged: (index) => setState(() => _filter = index),
-        ),
-        SizedBox(height: spacing.medium),
-        GlimmerChipGroup(
-          children: [
-            for (final tag in const ['Open now', 'Outdoors', 'Free entry'])
-              GlimmerChip(
-                label: tag,
-                icon: _tags.contains(tag) ? Icons.check : null,
-                selected: _tags.contains(tag),
-                onPressed: () => setState(
-                  () =>
-                      _tags.contains(tag) ? _tags.remove(tag) : _tags.add(tag),
-                ),
+          for (final item in _groceries) ...[
+            GlimmerListItem(
+              label: item,
+              leadingIcon: _bought.contains(item)
+                  ? Icons.check_circle
+                  : Icons.circle_outlined,
+              selected: _bought.contains(item),
+              onTap: () => setState(
+                () => _bought.contains(item)
+                    ? _bought.remove(item)
+                    : _bought.add(item),
               ),
-            GlimmerChip(
-              label: 'Santos',
-              avatar: const GlimmerAvatar(label: 'Santos', size: 20),
-              onDeleted: () {},
             ),
+            SizedBox(height: spacing.medium),
           ],
-        ),
-        SizedBox(height: spacing.extraLarge),
-        const _SectionLabel('Waiting'),
-        SizedBox(height: spacing.small),
-        Text(
-          'A placeholder is the shape of what is coming with light passing '
-          'over it, not a grey block with a band sliding behind a window.',
-          style:
-              tokens.typography.caption.copyWith(color: tokens.colors.outline),
-        ),
-        SizedBox(height: spacing.medium),
-        GlimmerCard(
-          child: _loading
-              ? Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const GlimmerSkeleton(
-                      width: 40,
-                      height: 40,
-                      borderRadius: BorderRadius.all(Radius.circular(999)),
-                    ),
-                    SizedBox(width: spacing.medium),
-                    Expanded(child: GlimmerSkeleton.lines()),
-                  ],
-                )
-              : Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const GlimmerAvatar(label: 'Ana Ribeiro'),
-                    SizedBox(width: spacing.medium),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Ana Ribeiro',
-                              style: tokens.typography.titleSmall),
-                          SizedBox(height: spacing.extraSmall),
-                          Text(
-                            'Left a note about the delivery window on '
-                            'Thursday morning.',
-                            style: tokens.typography.bodySmall,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-        ),
-        SizedBox(height: spacing.medium),
-        GlimmerButton(
-          label: _loading ? 'Load the content' : 'Back to waiting',
-          expand: true,
-          onPressed: () => setState(() => _loading = !_loading),
-        ),
-        SizedBox(height: spacing.extraLarge),
-        const _SectionLabel('Small pieces'),
-        SizedBox(height: spacing.medium),
-        GlimmerSearchField(
-          hint: 'Search the list',
-          onChanged: (value) => setState(() => _query = value),
-        ),
-        SizedBox(height: spacing.medium),
-        Row(
-          children: [
-            const GlimmerAvatar(label: 'Ana Ribeiro'),
-            SizedBox(width: spacing.medium),
-            const GlimmerAvatar(icon: Icons.storefront, size: 32),
-            SizedBox(width: spacing.large),
-            GlimmerBadge(
-              count: _query.isEmpty ? 3 : _query.length,
-              child: GlimmerIconButton(
-                icon: Icons.notifications_outlined,
-                tooltip: 'Notifications',
+          SizedBox(height: spacing.large),
+          const _SectionLabel('Buttons'),
+          SizedBox(height: spacing.medium),
+          Wrap(
+            spacing: spacing.medium,
+            runSpacing: spacing.medium,
+            children: [
+              GlimmerButton(
+                label: 'Button',
+                leadingIcon: Icons.send_outlined,
                 onPressed: () {},
               ),
-            ),
-            SizedBox(width: spacing.large),
-            const GlimmerCircularProgress(size: 32),
-            SizedBox(width: spacing.medium),
-            const GlimmerCircularProgress(value: 0.65, size: 32),
-          ],
-        ),
-        SizedBox(height: spacing.large),
-        const GlimmerDivider(),
-        SizedBox(height: spacing.large),
-        const GlimmerExpansionTile(
-          label: 'Delivery',
-          supportingLabel: 'Thursday, before noon',
-          leadingIcon: Icons.local_shipping_outlined,
-          children: [
-            GlimmerListItem(
-              label: 'Leave with a neighbour',
-              leadingIcon: Icons.home_outlined,
-            ),
-            GlimmerListItem(
-              label: 'Ring the bell twice',
-              leadingIcon: Icons.notifications_active_outlined,
-            ),
-          ],
-        ),
-        SizedBox(height: spacing.extraLarge),
-        const _SectionLabel('Screens'),
-        SizedBox(height: spacing.small),
-        Text(
-          'A pushed screen arrives instead of sliding, and the one behind it '
-          'withdraws rather than moving away.',
-          style:
-              tokens.typography.caption.copyWith(color: tokens.colors.outline),
-        ),
-        SizedBox(height: spacing.medium),
-        GlimmerButton(
-          label: 'Open a screen',
-          leadingIcon: Icons.open_in_new,
-          onPressed: () => Navigator.of(context).push(
-            GlimmerPageRoute<void>(builder: (context) => const _DetailScreen()),
+              GlimmerButton(
+                  label: 'Prominent', prominent: true, onPressed: () {}),
+              const GlimmerButton(label: 'Disabled', onPressed: null),
+              GlimmerToggleButton(
+                label: _muted ? 'Muted' : 'Mute',
+                leadingIcon: _muted ? Icons.volume_off : Icons.volume_up,
+                selected: _muted,
+                onChanged: (value) => setState(() => _muted = value),
+              ),
+            ],
           ),
-        ),
-        SizedBox(height: spacing.extraLarge),
-        const _SectionLabel('Overlays'),
-        SizedBox(height: spacing.small),
-        Text(
-          'A panel over a blurred app, a sheet from the bottom, a message that '
-          'leaves on its own, a menu against its anchor.',
-          style:
-              tokens.typography.caption.copyWith(color: tokens.colors.outline),
-        ),
-        SizedBox(height: spacing.medium),
-        Wrap(
-          spacing: spacing.medium,
-          runSpacing: spacing.medium,
-          children: [
-            GlimmerButton(
-              label: 'Dialog',
-              leadingIcon: Icons.chat_outlined,
-              onPressed: () => _openDialog(context),
-            ),
-            GlimmerButton(
-              label: 'Sheet',
-              leadingIcon: Icons.vertical_align_bottom,
-              onPressed: () => _openSheet(context),
-            ),
-            GlimmerButton(
-              label: 'Message',
-              leadingIcon: Icons.campaign_outlined,
-              onPressed: () => showGlimmerSnackbar(
-                context,
-                message: 'Added to the Saturday market list',
-                icon: Icons.check_circle_outline,
-                actionLabel: 'Undo',
-                onAction: () {},
-                bottomInset: _navigationStripHeight,
+          SizedBox(height: spacing.medium),
+          GlimmerButton(
+            label: 'Large, for the one action that matters',
+            leadingIcon: Icons.navigation_outlined,
+            size: GlimmerButtonSize.large,
+            expand: true,
+            onPressed: () {},
+          ),
+          SizedBox(height: spacing.extraLarge),
+          const _SectionLabel('Pager'),
+          SizedBox(height: spacing.small),
+          Text(
+            'Pages shorten, blur and fade as they leave the centre.',
+            style: tokens.typography.caption
+                .copyWith(color: tokens.colors.outline),
+          ),
+          SizedBox(height: spacing.medium),
+          SizedBox(
+            height: 220,
+            child: GlimmerPager(
+              itemCount: _pagerPages.length,
+              itemBuilder: (context, page) => GlimmerCard(
+                title: _pagerPages[page].$1,
+                supportingText: _pagerPages[page].$2,
+                leadingIcon: _pagerPages[page].$3,
               ),
             ),
-            Builder(
-              builder: (context) => GlimmerButton(
-                label: 'Menu',
-                leadingIcon: Icons.more_horiz,
-                onPressed: () => _openMenu(context),
+          ),
+          SizedBox(height: spacing.extraLarge),
+          const _SectionLabel('Icon buttons and voice input'),
+          SizedBox(height: spacing.medium),
+          Row(
+            children: [
+              GlimmerIconButton(
+                icon: Icons.mic_none,
+                tooltip: 'Speak',
+                prominent: true,
+                onPressed: () => setState(() => _listening = !_listening),
               ),
+              SizedBox(width: spacing.medium),
+              GlimmerIconToggleButton(
+                icon: Icons.bookmark_outline,
+                selectedIcon: Icons.bookmark,
+                selected: _bought.isNotEmpty,
+                tooltip: 'Bookmark',
+                onChanged: (_) => setState(_bought.clear),
+              ),
+              SizedBox(width: spacing.extraLarge),
+              GlimmerVoiceInputIndicator(listening: _listening),
+            ],
+          ),
+          SizedBox(height: spacing.extraLarge),
+          const _SectionLabel('Choosing'),
+          SizedBox(height: spacing.small),
+          Text(
+            'A tick that is drawn on, a dot that springs out, and a marker that '
+            'slides between choices.',
+            style: tokens.typography.caption
+                .copyWith(color: tokens.colors.outline),
+          ),
+          SizedBox(height: spacing.medium),
+          GlimmerCheckbox(
+            value: _digest,
+            label: 'Send me the weekly digest',
+            onChanged: (value) => setState(() => _digest = value),
+          ),
+          for (final roast in const ['Light', 'Medium', 'Dark'])
+            GlimmerRadio<String>(
+              value: roast,
+              groupValue: _roast,
+              label: '$roast roast',
+              onChanged: (value) => setState(() => _roast = value),
             ),
-          ],
-        ),
-        SizedBox(height: spacing.extraLarge),
-        const _SectionLabel('Input'),
-        SizedBox(height: spacing.small),
-        Text(
-          'A field, a switch, a bar and a slider, all drawn from the same '
-          'tokens as everything above.',
-          style:
-              tokens.typography.caption.copyWith(color: tokens.colors.outline),
-        ),
-        SizedBox(height: spacing.medium),
-        const GlimmerTextField(
-          label: 'Add an item',
-          prefixIcon: Icons.add,
-        ),
-        SizedBox(height: spacing.medium),
-        GlimmerListItem(
-          label: 'Immersive controls',
-          supportingLabel: 'Dim everything but the focused surface',
-          trailing: GlimmerSwitch(
-            value: _immersive,
+          SizedBox(height: spacing.medium),
+          GlimmerTabs(
+            labels: const ['All', 'Open', 'Closed'],
+            selectedIndex: _filter,
+            onChanged: (index) => setState(() => _filter = index),
+          ),
+          SizedBox(height: spacing.medium),
+          GlimmerChipGroup(
+            children: [
+              for (final tag in const ['Open now', 'Outdoors', 'Free entry'])
+                GlimmerChip(
+                  label: tag,
+                  icon: _tags.contains(tag) ? Icons.check : null,
+                  selected: _tags.contains(tag),
+                  onPressed: () => setState(
+                    () => _tags.contains(tag)
+                        ? _tags.remove(tag)
+                        : _tags.add(tag),
+                  ),
+                ),
+              GlimmerChip(
+                label: 'Santos',
+                avatar: const GlimmerAvatar(label: 'Santos', size: 20),
+                onDeleted: () {},
+              ),
+            ],
+          ),
+          SizedBox(height: spacing.extraLarge),
+          const _SectionLabel('Waiting'),
+          SizedBox(height: spacing.small),
+          Text(
+            'A placeholder is the shape of what is coming with light passing '
+            'over it, not a grey block with a band sliding behind a window.',
+            style: tokens.typography.caption
+                .copyWith(color: tokens.colors.outline),
+          ),
+          SizedBox(height: spacing.medium),
+          GlimmerCard(
+            child: _loading
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const GlimmerSkeleton(
+                        width: 40,
+                        height: 40,
+                        borderRadius: BorderRadius.all(Radius.circular(999)),
+                      ),
+                      SizedBox(width: spacing.medium),
+                      Expanded(child: GlimmerSkeleton.lines()),
+                    ],
+                  )
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const GlimmerAvatar(label: 'Ana Ribeiro'),
+                      SizedBox(width: spacing.medium),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Ana Ribeiro',
+                                style: tokens.typography.titleSmall),
+                            SizedBox(height: spacing.extraSmall),
+                            Text(
+                              'Left a note about the delivery window on '
+                              'Thursday morning.',
+                              style: tokens.typography.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+          SizedBox(height: spacing.medium),
+          GlimmerButton(
+            label: _loading ? 'Load the content' : 'Back to waiting',
+            expand: true,
+            onPressed: () => setState(() => _loading = !_loading),
+          ),
+          SizedBox(height: spacing.extraLarge),
+          const _SectionLabel('Small pieces'),
+          SizedBox(height: spacing.medium),
+          GlimmerSearchField(
+            hint: 'Search the list',
+            onChanged: (value) => setState(() => _query = value),
+          ),
+          SizedBox(height: spacing.medium),
+          Row(
+            children: [
+              const GlimmerAvatar(label: 'Ana Ribeiro'),
+              SizedBox(width: spacing.medium),
+              const GlimmerAvatar(icon: Icons.storefront, size: 32),
+              SizedBox(width: spacing.large),
+              GlimmerBadge(
+                count: _query.isEmpty ? 3 : _query.length,
+                child: GlimmerIconButton(
+                  icon: Icons.notifications_outlined,
+                  tooltip: 'Notifications',
+                  onPressed: () {},
+                ),
+              ),
+              SizedBox(width: spacing.large),
+              const GlimmerCircularProgress(size: 32),
+              SizedBox(width: spacing.medium),
+              const GlimmerCircularProgress(value: 0.65, size: 32),
+            ],
+          ),
+          SizedBox(height: spacing.large),
+          const GlimmerDivider(),
+          SizedBox(height: spacing.large),
+          const GlimmerExpansionTile(
+            label: 'Delivery',
+            supportingLabel: 'Thursday, before noon',
+            leadingIcon: Icons.local_shipping_outlined,
+            children: [
+              GlimmerListItem(
+                label: 'Leave with a neighbour',
+                leadingIcon: Icons.home_outlined,
+              ),
+              GlimmerListItem(
+                label: 'Ring the bell twice',
+                leadingIcon: Icons.notifications_active_outlined,
+              ),
+            ],
+          ),
+          SizedBox(height: spacing.extraLarge),
+          const _SectionLabel('Screens'),
+          SizedBox(height: spacing.small),
+          Text(
+            'A pushed screen arrives instead of sliding, and the one behind it '
+            'withdraws rather than moving away.',
+            style: tokens.typography.caption
+                .copyWith(color: tokens.colors.outline),
+          ),
+          SizedBox(height: spacing.medium),
+          GlimmerButton(
+            label: 'Open a screen',
+            leadingIcon: Icons.open_in_new,
+            onPressed: () => Navigator.of(context).push(
+              GlimmerPageRoute<void>(
+                  builder: (context) => const _DetailScreen()),
+            ),
+          ),
+          SizedBox(height: spacing.extraLarge),
+          const _SectionLabel('Overlays'),
+          SizedBox(height: spacing.small),
+          Text(
+            'A panel over a blurred app, a sheet from the bottom, a message that '
+            'leaves on its own, a menu against its anchor.',
+            style: tokens.typography.caption
+                .copyWith(color: tokens.colors.outline),
+          ),
+          SizedBox(height: spacing.medium),
+          Wrap(
+            spacing: spacing.medium,
+            runSpacing: spacing.medium,
+            children: [
+              GlimmerButton(
+                label: 'Dialog',
+                leadingIcon: Icons.chat_outlined,
+                onPressed: () => _openDialog(context),
+              ),
+              GlimmerButton(
+                label: 'Sheet',
+                leadingIcon: Icons.vertical_align_bottom,
+                onPressed: () => _openSheet(context),
+              ),
+              GlimmerButton(
+                label: 'Message',
+                leadingIcon: Icons.campaign_outlined,
+                onPressed: () => showGlimmerSnackbar(
+                  context,
+                  message: 'Added to the Saturday market list',
+                  icon: Icons.check_circle_outline,
+                  actionLabel: 'Undo',
+                  onAction: () {},
+                  bottomInset: _navigationStripHeight,
+                ),
+              ),
+              Builder(
+                builder: (context) => GlimmerButton(
+                  label: 'Menu',
+                  leadingIcon: Icons.more_horiz,
+                  onPressed: () => _openMenu(context),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: spacing.extraLarge),
+          const _SectionLabel('Input'),
+          SizedBox(height: spacing.small),
+          Text(
+            'A field, a switch, a bar and a slider, all drawn from the same '
+            'tokens as everything above.',
+            style: tokens.typography.caption
+                .copyWith(color: tokens.colors.outline),
+          ),
+          SizedBox(height: spacing.medium),
+          const GlimmerTextField(
+            label: 'Add an item',
+            prefixIcon: Icons.add,
+          ),
+          SizedBox(height: spacing.medium),
+          GlimmerListItem(
             label: 'Immersive controls',
-            onChanged: (value) => setState(() => _immersive = value),
+            supportingLabel: 'Dim everything but the focused surface',
+            trailing: GlimmerSwitch(
+              value: _immersive,
+              label: 'Immersive controls',
+              onChanged: (value) => setState(() => _immersive = value),
+            ),
           ),
-        ),
-        SizedBox(height: spacing.large),
-        GlimmerProgressBar(value: _progress),
-        SizedBox(height: spacing.medium),
-        GlimmerSlider(
-          value: _progress,
-          semanticLabel: 'Progress',
-          onChanged: (value) => setState(() => _progress = value),
-        ),
-        SizedBox(height: spacing.large),
-        Text(
-          'With no value, a highlight travels the track instead of a block '
-          'sliding along it.',
-          style:
-              tokens.typography.caption.copyWith(color: tokens.colors.outline),
-        ),
-        SizedBox(height: spacing.medium),
-        const GlimmerProgressBar(),
-      ],
+          SizedBox(height: spacing.large),
+          GlimmerProgressBar(value: _progress),
+          SizedBox(height: spacing.medium),
+          GlimmerSlider(
+            value: _progress,
+            semanticLabel: 'Progress',
+            onChanged: (value) => setState(() => _progress = value),
+          ),
+          SizedBox(height: spacing.large),
+          Text(
+            'With no value, a highlight travels the track instead of a block '
+            'sliding along it.',
+            style: tokens.typography.caption
+                .copyWith(color: tokens.colors.outline),
+          ),
+          SizedBox(height: spacing.medium),
+          const GlimmerProgressBar(),
+          // Room for the floating button, which would otherwise sit on the
+          // last thing in the list.
+          SizedBox(height: GlimmerFab.size + spacing.large),
+        ],
+      ),
     );
   }
 }

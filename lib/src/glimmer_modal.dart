@@ -6,6 +6,7 @@ import 'glimmer_button.dart';
 import 'glimmer_depth.dart';
 import 'glimmer_entrance.dart';
 import 'glimmer_motion.dart';
+import 'glimmer_snackbar.dart';
 import 'glimmer_surface.dart';
 import 'glimmer_theme.dart';
 
@@ -190,38 +191,45 @@ class GlimmerBottomSheet extends StatelessWidget {
     final spacing = tokens.spacing;
     final colors = tokens.colors;
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        spacing.large,
-        0,
-        spacing.large,
-        spacing.large,
-      ),
-      child: GlimmerSurface(
-        padding: EdgeInsets.all(spacing.large),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (showHandle) ...[
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colors.onSurface.withValues(alpha: 0.35),
-                    borderRadius: BorderRadius.circular(999),
+    // The sheet reports how much of the bottom of the screen it takes, so a
+    // message raised while it is open starts above it rather than printing
+    // itself across the middle of it. The reporter is outside the padding, so
+    // what it reports includes the sheet's own margin and the message clears
+    // the panel rather than landing on its shoulder.
+    return GlimmerBottomInset(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          spacing.large,
+          0,
+          spacing.large,
+          spacing.large,
+        ),
+        child: GlimmerSurface(
+          padding: EdgeInsets.all(spacing.large),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (showHandle) ...[
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colors.onSurface.withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(height: spacing.medium),
+                SizedBox(height: spacing.medium),
+              ],
+              if (title != null) ...[
+                Text(title!, style: tokens.typography.titleMedium),
+                SizedBox(height: spacing.medium),
+              ],
+              Flexible(child: child),
             ],
-            if (title != null) ...[
-              Text(title!, style: tokens.typography.titleMedium),
-              SizedBox(height: spacing.medium),
-            ],
-            Flexible(child: child),
-          ],
+          ),
         ),
       ),
     );

@@ -75,6 +75,16 @@ First release.
 - `GlimmerProgressBar`, drawn rather than borrowed. The determinate bar is the
   slider's lit track with a glow at the leading end; the indeterminate one
   sends a tapered highlight along the track instead of sliding a block.
+- `GlimmerFab`, round or extended. There are no shadows here, so the one action
+  that matters is lifted with light instead: the focal fill, the lit edge, and
+  a bloom under it in the same colour. `GlimmerScaffold` has a slot for it.
+- `GlimmerSwitch` redrawn. The track is a surface, so turning it on is the
+  focus treatment rather than a fill swapping colour, and the thumb is the
+  slider's thumb at switch size: a dot with a halo that grows as it lights.
+- `GlimmerBottomInset`. A message never lands on a panel that is already on
+  screen: a sheet reports how much room it takes and the snackbar starts above
+  it, because a message about something you just did inside a sheet, printed
+  across the middle of that sheet, reads as part of it rather than as a reply.
 - Selection controls, none of which ripple. `GlimmerCheckbox` traces its tick
   on rather than fading it in, `GlimmerRadio` springs its dot out of the centre
   with a halo under it, and `GlimmerTabs` slides a lit marker between choices

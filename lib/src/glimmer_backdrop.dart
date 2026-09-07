@@ -68,15 +68,20 @@ class GlimmerBackdrop extends StatelessWidget {
         child: Image(image: image!, fit: BoxFit.cover),
       );
     } else {
+      // A tint over black shows at once; the same tint over white barely
+      // registers, and then the surfaces on top of it are near-white as well,
+      // so the glass has nothing left to filter and a light screen reads as
+      // flat. The light ground gets roughly twice the colour.
+      final lift = palette.brightness == Brightness.dark ? 1.0 : 2.1;
       final stops = colors ??
           [
             Color.alphaBlend(
-              palette.primary.withValues(alpha: 0.16),
+              palette.primary.withValues(alpha: 0.16 * lift),
               palette.background,
             ),
             palette.background,
             Color.alphaBlend(
-              palette.secondary.withValues(alpha: 0.22),
+              palette.secondary.withValues(alpha: 0.22 * lift),
               palette.background,
             ),
           ];

@@ -46,6 +46,7 @@ export 'src/glimmer_controls.dart';
 export 'src/glimmer_depth.dart';
 export 'src/glimmer_details.dart';
 export 'src/glimmer_edge.dart';
+export 'src/glimmer_fab.dart';
 export 'src/glimmer_entrance.dart';
 export 'src/glimmer_icon_button.dart';
 export 'src/glimmer_list.dart';

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'glimmer_icon_button.dart';
 import 'glimmer_motion.dart';
+import 'glimmer_surface.dart';
 import 'glimmer_text_selection.dart';
 import 'glimmer_theme.dart';
 
@@ -168,12 +169,25 @@ class _GlimmerTextFieldState extends State<GlimmerTextField> {
   }
 }
 
-/// A switch styled to match Glimmer.
+/// A switch, drawn as a lit track with a lit thumb.
 ///
 /// [GlimmerToggleButton] is the other way to say on and off, and it changes
 /// colour rather than sliding a thumb. A settings screen usually wants the
-/// sliding kind, so this is one drawn from the same tokens: the track is a
-/// surface, the thumb takes the focal colour, and there is no ripple.
+/// sliding kind.
+///
+/// Material fills the track and slides an opaque disc along it. Here the track
+/// is a [GlimmerSurface], so it carries the same lit edge and the same press
+/// state as everything else, and turning it on is the focus treatment rather
+/// than a fill swapping colour. The thumb is the slider's thumb at switch size:
+/// a dot with a halo under it that grows as it lights.
+///
+/// ```dart
+/// GlimmerSwitch(
+///   value: immersive,
+///   label: 'Immersive controls',
+///   onChanged: (value) => setState(() => immersive = value),
+/// )
+/// ```
 class GlimmerSwitch extends StatelessWidget {
   /// Creates a Glimmer switch.
   const GlimmerSwitch({
@@ -192,40 +206,47 @@ class GlimmerSwitch extends StatelessWidget {
   /// The accessibility label.
   final String? label;
 
+  /// The track's size.
+  static const trackSize = Size(58, 34);
+
+  /// The thumb's diameter when the switch is off.
+  static const thumbSize = 18.0;
+
+  /// How much bigger the thumb gets once the switch is on.
+  static const onThumbScale = 1.15;
+
   @override
   Widget build(BuildContext context) {
-    final colors = GlimmerTheme.colorsOf(context);
+    final tokens = GlimmerTheme.of(context);
+    final colors = tokens.colors;
+    final enabled = onChanged != null;
+
     return Semantics(
       toggled: value,
+      enabled: enabled,
       label: label,
-      child: GestureDetector(
-        onTap: onChanged == null ? null : () => onChanged!(!value),
-        child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 160),
-          opacity: onChanged == null ? 0.42 : 1,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            width: 58,
-            height: 34,
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: value ? colors.primary : colors.surface,
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: value ? colors.primary : colors.outline,
-                width: 1.5,
-              ),
-            ),
-            child: AnimatedAlign(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOutCubic,
-              alignment: value ? Alignment.centerRight : Alignment.centerLeft,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: value ? colors.onPrimary : colors.outline,
-                  shape: BoxShape.circle,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 160),
+        opacity: enabled ? 1 : 0.42,
+        child: GlimmerSurface(
+          focused: value,
+          blur: 0,
+          borderRadius: tokens.shapes.stadium,
+          padding: EdgeInsets.zero,
+          onTap: enabled ? () => onChanged!(!value) : null,
+          child: SizedBox(
+            width: trackSize.width,
+            height: trackSize.height,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween<double>(end: value ? 1 : 0),
+              duration: GlimmerMotion.focusExitDuration,
+              curve: GlimmerMotion.focusCurve,
+              builder: (context, progress, child) => CustomPaint(
+                painter: _GlimmerSwitchPainter(
+                  progress: progress,
+                  on: colors.primary,
+                  off: colors.outline,
                 ),
-                child: const SizedBox.square(dimension: 22),
               ),
             ),
           ),
@@ -233,6 +254,56 @@ class GlimmerSwitch extends StatelessWidget {
       ),
     );
   }
+}
+
+class _GlimmerSwitchPainter extends CustomPainter {
+  const _GlimmerSwitchPainter({
+    required this.progress,
+    required this.on,
+    required this.off,
+  });
+
+  final double progress;
+  final Color on;
+  final Color off;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final t = progress.clamp(0.0, 1.0);
+    final radius = (GlimmerSwitch.thumbSize / 2) *
+        (1 + ((GlimmerSwitch.onThumbScale - 1) * t));
+    final inset = (GlimmerSwitch.trackSize.height / 2);
+    final travel = size.width - (inset * 2);
+    final centre = Offset(inset + (travel * t), size.height / 2);
+    final colour = Color.lerp(off, on, t)!;
+
+    // The halo is what makes the thumb read as lit rather than as a disc. It
+    // is the same glow the slider puts under its thumb while it is held.
+    if (t > 0) {
+      canvas.drawCircle(
+        centre,
+        radius + (7 * t),
+        Paint()
+          ..color = colour.withValues(alpha: 0.3 * t)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+      );
+    }
+
+    canvas
+      ..drawCircle(centre, radius, Paint()..color = colour)
+      ..drawCircle(
+        centre,
+        radius - 0.75,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5
+          ..color = const Color(0xFFFFFFFF).withValues(alpha: 0.4 * t),
+      );
+  }
+
+  @override
+  bool shouldRepaint(_GlimmerSwitchPainter old) =>
+      old.progress != progress || old.on != on || old.off != off;
 }
 
 /// A progress bar drawn as a lit track.

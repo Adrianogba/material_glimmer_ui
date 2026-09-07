@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import 'glimmer_entrance.dart';
 import 'glimmer_motion.dart';
@@ -14,7 +15,12 @@ import 'glimmer_theme.dart';
 /// screen.
 ///
 /// Everything transient in this kit is a stadium-edged pill, so that is what a
-/// message is. It sits above the content and below a modal.
+/// message is.
+///
+/// It never lands on a panel that is already on screen. A sheet or a menu open
+/// at the bottom reports how much room it takes, and the message starts above
+/// that: a message about something you just did inside a sheet, printed across
+/// the middle of that sheet, reads as part of it rather than as a reply to it.
 class GlimmerSnackbar extends StatelessWidget {
   /// Creates a snackbar pill.
   const GlimmerSnackbar({
@@ -135,6 +141,105 @@ class GlimmerSnackbarHandle {
 }
 
 /// Owns the single entry that is on screen, per overlay.
+/// How much room at the bottom of the screen is already taken.
+///
+/// A bottom sheet reports its own height here while it is open, and the
+/// snackbar starts above whatever it finds, so a message never lands on the
+/// panel that raised it.
+///
+/// Wrap anything else that occupies the bottom of the screen in
+/// [GlimmerBottomInset] to have messages clear it too.
+class GlimmerBottomInset extends StatefulWidget {
+  /// Reports [child]'s height for as long as it is on screen.
+  const GlimmerBottomInset({super.key, required this.child});
+
+  /// The panel taking up the room.
+  final Widget child;
+
+  static final _byOverlay = Expando<ValueNotifier<double>>();
+
+  /// The notifier for [overlay], created on first use.
+  static ValueNotifier<double> of(OverlayState overlay) =>
+      _byOverlay[overlay] ??= ValueNotifier<double>(0);
+
+  @override
+  State<GlimmerBottomInset> createState() => _GlimmerBottomInsetState();
+}
+
+class _GlimmerBottomInsetState extends State<GlimmerBottomInset> {
+  ValueNotifier<double>? _inset;
+  var _reported = 0.0;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final overlay = Overlay.maybeOf(context, rootOverlay: true);
+    _inset = overlay == null ? null : GlimmerBottomInset.of(overlay);
+  }
+
+  @override
+  void dispose() {
+    _release();
+    super.dispose();
+  }
+
+  void _release() {
+    final inset = _inset;
+    if (inset != null && inset.value == _reported) inset.value = 0;
+    _reported = 0;
+  }
+
+  void _report(double height) {
+    final inset = _inset;
+    if (inset == null || height == _reported) return;
+    _reported = height;
+    // After the frame: reporting during layout would rebuild the overlay
+    // entry that is reading it in the same pass.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) inset.value = height;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return _MeasuredHeight(onHeight: _report, child: widget.child);
+      },
+    );
+  }
+}
+
+/// Calls [onHeight] with its child's height after every layout.
+class _MeasuredHeight extends SingleChildRenderObjectWidget {
+  const _MeasuredHeight({required this.onHeight, required super.child});
+
+  final ValueChanged<double> onHeight;
+
+  @override
+  _RenderMeasuredHeight createRenderObject(BuildContext context) =>
+      _RenderMeasuredHeight(onHeight);
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    _RenderMeasuredHeight renderObject,
+  ) =>
+      renderObject.onHeight = onHeight;
+}
+
+class _RenderMeasuredHeight extends RenderProxyBox {
+  _RenderMeasuredHeight(this.onHeight);
+
+  ValueChanged<double> onHeight;
+
+  @override
+  void performLayout() {
+    super.performLayout();
+    onHeight(size.height);
+  }
+}
+
 class _GlimmerSnackbarHost {
   static final _current = Expando<_GlimmerSnackbarEntry>();
 
@@ -276,13 +381,22 @@ class _GlimmerSnackbarLayerState extends State<_GlimmerSnackbarLayer>
   @override
   Widget build(BuildContext context) {
     final tokens = GlimmerTheme.of(context);
+    final overlay = Overlay.maybeOf(context, rootOverlay: true);
+    final taken = overlay == null ? _noInset : GlimmerBottomInset.of(overlay);
 
-    return Positioned(
-      left: tokens.spacing.large,
-      right: tokens.spacing.large,
-      bottom: tokens.spacing.large +
-          widget.bottomInset +
-          MediaQuery.paddingOf(context).bottom,
+    return ValueListenableBuilder<double>(
+      valueListenable: taken,
+      builder: (context, reserved, child) => Positioned(
+        left: tokens.spacing.large,
+        right: tokens.spacing.large,
+        // Above whatever is already occupying the bottom of the screen, so a
+        // message never prints itself across a sheet that is open.
+        bottom: tokens.spacing.large +
+            widget.bottomInset +
+            reserved +
+            (reserved > 0 ? 0 : MediaQuery.paddingOf(context).bottom),
+        child: child!,
+      ),
       child: SlideTransition(
         position: Tween<Offset>(
           begin: const Offset(0, 1.4),
@@ -306,3 +420,6 @@ class _GlimmerSnackbarLayerState extends State<_GlimmerSnackbarLayer>
     );
   }
 }
+
+/// Stands in for the inset notifier when there is no overlay to read one from.
+final _noInset = ValueNotifier<double>(0);
