@@ -60,6 +60,21 @@ class GlimmerEdge {
         bottomLeft: focal.withTone(77),
       );
 
+  /// The focused edge on a light ground.
+  ///
+  /// White at the lit corner is right against black and nothing at all against
+  /// white: the ring simply breaks wherever the highlight lands, which is what
+  /// puts a pale gap in the bottom of every selected component on a light
+  /// theme. The light set is the dark set mirrored about tone 70, so the lit
+  /// corner is the *darkest* stop rather than the brightest and the ring stays
+  /// as visible against its ground, just from the other direction.
+  factory GlimmerEdge.focusedLight(Color focal) => GlimmerEdge(
+        topLeft: focal.withTone(40),
+        topRight: focal.withTone(55),
+        bottomRight: focal.withTone(71),
+        bottomLeft: focal.withTone(63),
+      );
+
   /// An edge for a surface that carries a fill of its own.
   ///
   /// The resting edge is a fixed set of greys, which is right on the neutral

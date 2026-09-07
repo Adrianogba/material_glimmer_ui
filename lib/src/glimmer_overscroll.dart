@@ -53,6 +53,19 @@ class GlimmerOverscrollIndicator extends StatefulWidget {
 
 class _GlimmerOverscrollIndicatorState extends State<GlimmerOverscrollIndicator>
     with TickerProviderStateMixin {
+  /// Whether a [GlimmerRefreshIndicator] is already lighting the leading edge.
+  ///
+  /// Both of them draw the same light on the same edge, so inside one of them
+  /// this leaves the leading edge alone. Two lights on one edge read as one
+  /// fast glow followed by a slower one rather than as a single push.
+  var _refreshOwnsLeading = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _refreshOwnsLeading = _GlimmerRefreshScope.of(context);
+  }
+
   late final AnimationController _leading = AnimationController.unbounded(
     vsync: this,
   )..addListener(_repaint);
@@ -92,6 +105,7 @@ class _GlimmerOverscrollIndicatorState extends State<GlimmerOverscrollIndicator>
     if (notification is OverscrollNotification) {
       final overscroll = notification.overscroll;
       if (overscroll < 0) {
+        if (_refreshOwnsLeading) return false;
         _pull(_leading, -overscroll);
       } else {
         _pull(_trailing, overscroll);
@@ -356,7 +370,11 @@ class _GlimmerRefreshIndicatorState extends State<GlimmerRefreshIndicator>
                 (-notification.overscroll /
                     GlimmerRefreshIndicator.triggerDistance))
             .clamp(0.0, 1.0);
-      _armed = _pull.value >= 1;
+      // The edge lights for any overscroll, but only a finger still on the
+      // screen arms a refresh. A fling that runs off the top is the list
+      // stopping, not a request to reload, and treating it as one is what puts
+      // a second slower glow on the edge after the first.
+      if (notification.dragDetails != null && _pull.value >= 1) _armed = true;
     } else if (notification is ScrollEndNotification) {
       if (_armed) {
         unawaited(_run());
@@ -405,17 +423,34 @@ class _GlimmerRefreshIndicatorState extends State<GlimmerRefreshIndicator>
   Widget build(BuildContext context) {
     final colors = GlimmerTheme.colorsOf(context);
 
-    return NotificationListener<ScrollNotification>(
-      onNotification: _onNotification,
-      child: CustomPaint(
-        foregroundPainter: _GlimmerOverscrollPainter(
-          axisDirection: AxisDirection.down,
-          color: widget.color ?? colors.primary,
-          leading: _strength,
-          trailing: 0,
+    return _GlimmerRefreshScope(
+      child: NotificationListener<ScrollNotification>(
+        onNotification: _onNotification,
+        child: CustomPaint(
+          foregroundPainter: _GlimmerOverscrollPainter(
+            axisDirection: AxisDirection.down,
+            color: widget.color ?? colors.primary,
+            leading: _strength,
+            trailing: 0,
+          ),
+          child: widget.child,
         ),
-        child: widget.child,
       ),
     );
   }
+}
+
+/// Marks the subtree of a [GlimmerRefreshIndicator].
+///
+/// [GlimmerOverscrollIndicator] reads it and leaves the leading edge alone, so
+/// only one of them lights it.
+class _GlimmerRefreshScope extends InheritedWidget {
+  const _GlimmerRefreshScope({required super.child});
+
+  static bool of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_GlimmerRefreshScope>() !=
+      null;
+
+  @override
+  bool updateShouldNotify(_GlimmerRefreshScope oldWidget) => false;
 }

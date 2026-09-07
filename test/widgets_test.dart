@@ -1908,6 +1908,93 @@ void main() {
       await tester.pumpAndSettle();
     });
 
+    // Two lights on one edge read as one fast glow followed by a slower one.
+    // A fling that runs off the top of a list is the list stopping, not a
+    // request to reload, so it lights the edge and springs back without ever
+    // arming a refresh.
+    testWidgets('a fling to the top lights the edge but does not refresh',
+        (tester) async {
+      var runs = 0;
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: GlimmerRefreshIndicator(
+              onRefresh: () async => runs++,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: List.generate(
+                  60,
+                  (i) => SizedBox(height: 40, child: Text('Row $i')),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Down the list, then flung back to the top. The overscroll at the end
+      // of that fling is ballistic: no finger is on the screen.
+      await tester.fling(find.byType(ListView), const Offset(0, -600), 3000);
+      await tester.pumpAndSettle();
+      await tester.fling(find.byType(ListView), const Offset(0, 900), 6000);
+      await tester.pumpAndSettle();
+
+      expect(runs, 0, reason: 'a fling should not arm a refresh');
+    });
+
+    testWidgets('only one indicator lights the leading edge', (tester) async {
+      final completer = Completer<void>();
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: GlimmerRefreshIndicator(
+              onRefresh: () => completer.future,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: const [SizedBox(height: 200, child: Text('rows'))],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The scroll behaviour still wraps the list. It just leaves the edge the
+      // refresh indicator is already lighting alone, so a pull is one glow
+      // rather than a fast one followed by a slower one.
+      final overscroll = find.descendant(
+        of: find.byType(GlimmerRefreshIndicator),
+        matching: find.byType(GlimmerOverscrollIndicator),
+      );
+      expect(overscroll, findsOneWidget);
+
+      String leadingPainter() => tester
+          .widget<CustomPaint>(
+            find
+                .descendant(of: overscroll, matching: find.byType(CustomPaint))
+                .first,
+          )
+          .foregroundPainter
+          .toString();
+
+      final atRest = leadingPainter();
+
+      final gesture = await tester.startGesture(const Offset(400, 200));
+      await gesture.moveBy(const Offset(0, 300));
+      await tester.pump();
+
+      expect(
+        leadingPainter(),
+        atRest,
+        reason: 'the overscroll indicator should not have lit anything',
+      );
+
+      await gesture.up();
+      await tester.pump();
+      completer.complete();
+      await tester.pumpAndSettle();
+    });
+
     testWidgets('a short pull does not', (tester) async {
       var runs = 0;
       await tester.pumpWidget(host(() async => runs++));

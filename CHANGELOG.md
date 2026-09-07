@@ -11,6 +11,12 @@ First release.
 
 - `MaterialGlimmerApp` and `MaterialGlimmerApp.router`, the application widget,
   alongside `MaterialApp` and `CupertinoApp`.
+- A light-ground edge as well as a dark one, for both the resting and the
+  focused states. White at the lit corner is right against black and nothing
+  at all against white, so on a light theme the ring used to break wherever
+  the highlight landed. The light set is the dark set mirrored about tone 70:
+  the lit corner is the darkest stop rather than the brightest, and the ring
+  stays as visible against its ground, just from the other direction.
 - `GlimmerTheme.dark()` and `GlimmerTheme.light()`, each a complete `ThemeData`
   with every token in a `ThemeExtension` and the `ColorScheme` and `TextTheme`
   derived from it. `MaterialGlimmerApp` builds both always, so
@@ -42,7 +48,9 @@ First release.
 - `GlimmerRefreshIndicator`, pull to refresh without moving anything. The same
   edge light brightens with the pull, then holds and breathes on the ambient
   envelope while the work runs, instead of sliding a spinner over the list or
-  opening a gap above it.
+  opening a gap above it. Only a finger still on the screen arms it: a fling
+  that runs off the top lights the edge and springs back, because that is the
+  list stopping rather than a request to reload.
 - `GlimmerPageRoute`, a page that arrives instead of sliding. A slide or a fade
   puts the incoming page in its own layer, which takes the backdrop away from
   every glass surface on it for the length of the transition. This one moves

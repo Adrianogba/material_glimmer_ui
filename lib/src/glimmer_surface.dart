@@ -268,15 +268,22 @@ class _GlimmerSurfaceState extends State<GlimmerSurface>
           ? const GlimmerEdge.idle()
           : const GlimmerEdge.idleLight();
     }
+    final light = brightness == Brightness.light;
     final edge = GlimmerEdge.lerp(
       idle,
-      GlimmerEdge.focused(focal),
+      light ? GlimmerEdge.focusedLight(focal) : GlimmerEdge.focused(focal),
       focusProgress,
     );
     final focusPulse = (1 - (2 * (focusProgress - 0.5).abs())).clamp(0.0, 1.0);
+
+    // The sweep and the focus flash brighten toward white on a dark ground,
+    // which is where the language comes from. On a light one white is the
+    // ground, so brightening washes the ring out and the alternative, dulling
+    // toward black, is a smudge. The flash goes to the focal colour instead:
+    // the same event said as colour rather than as lightness.
     return edge.blendToward(
-      const Color(0xFFFFFFFF),
-      math.max(ambient, focusPulse),
+      light ? focal : const Color(0xFFFFFFFF),
+      math.max(ambient, focusPulse) * (light ? 0.55 : 1),
     );
   }
 
@@ -390,6 +397,11 @@ class _GlimmerSurfaceState extends State<GlimmerSurface>
                           widget.color == colors.surface ? null : widget.color,
                       brightness: colors.brightness,
                     ).scaleAlpha(entrance),
+                    // The soft pass is a bloom, and a bloom made of light sits
+                    // well on a dark ground. On a light one the same pass is
+                    // made of shadow, and at full strength it reads as a
+                    // smudge that widens every time focus arrives or leaves.
+                    bloom: colors.brightness == Brightness.dark ? 1.0 : 0.35,
                     edgeWidth: lerpDouble(
                       GlimmerMotion.borderWidth,
                       GlimmerMotion.focusedBorderWidth,
@@ -508,6 +520,7 @@ class _GlimmerSurfaceEdge extends CustomPainter {
     required this.focusProgress,
     required this.ambient,
     required this.pressedOpacity,
+    this.bloom = 1,
   });
 
   final BorderRadius radius;
@@ -516,6 +529,9 @@ class _GlimmerSurfaceEdge extends CustomPainter {
   final double focusProgress;
   final double ambient;
   final double pressedOpacity;
+
+  /// How strongly the soft pass reads, from 0 to 1.
+  final double bloom;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -545,17 +561,19 @@ class _GlimmerSurfaceEdge extends CustomPainter {
       ..clipRRect(rrect);
     final gradient = edge.toGradient(focusProgress: focusProgress);
 
-    // The soft pass sits under the sharp one and only supplies the bloom. It is
-    // held well below full strength because a blurred stroke concentrates its
-    // light wherever the gradient happens to peak, and at full alpha that turns
-    // the far corner into a blob instead of a graded edge.
+    // The soft pass sits under the sharp one and only supplies the bloom.
+    //
+    // Its strength has to come from the gradient's own alpha. A Paint ignores
+    // its color once it carries a shader, so scaling the stroke by setting
+    // paint.color does nothing at all.
     _stroke(
       canvas,
       rrect,
       width: edgeWidth * 2,
-      shader: gradient.createShader(rect),
+      shader: (bloom >= 1 ? edge : edge.scaleAlpha(bloom))
+          .toGradient(focusProgress: focusProgress)
+          .createShader(rect),
       sigma: GlimmerEdgeBlur.resolve(focusProgress, ambient) / 3,
-      opacity: 0.35,
     );
 
     // The sharp pass carries the shape of the edge, so it is drawn at the
@@ -577,13 +595,11 @@ class _GlimmerSurfaceEdge extends CustomPainter {
     required double width,
     required Shader shader,
     required double sigma,
-    double opacity = 1,
   }) {
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = width
-      ..shader = shader
-      ..color = const Color(0xFF000000).withValues(alpha: opacity);
+      ..shader = shader;
     if (sigma > 0.1) {
       paint.maskFilter = MaskFilter.blur(BlurStyle.normal, sigma);
     }
@@ -597,7 +613,8 @@ class _GlimmerSurfaceEdge extends CustomPainter {
       old.edgeWidth != edgeWidth ||
       old.focusProgress != focusProgress ||
       old.ambient != ambient ||
-      old.pressedOpacity != pressedOpacity;
+      old.pressedOpacity != pressedOpacity ||
+      old.bloom != bloom;
 }
 
 /// Glimmer lifts a focused surface from tone 20 to tone 34.
