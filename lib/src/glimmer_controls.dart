@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'glimmer_icon_button.dart';
 import 'glimmer_motion.dart';
 import 'glimmer_theme.dart';
 
@@ -24,6 +25,9 @@ class GlimmerTextField extends StatefulWidget {
     this.obscureText = false,
     this.keyboardType,
     this.maxLines = 1,
+    this.suffix,
+    this.autofocus = false,
+    this.textInputAction,
   });
 
   /// An external controller for the field's text.
@@ -43,6 +47,15 @@ class GlimmerTextField extends StatefulWidget {
 
   /// Called when the user submits from the keyboard.
   final ValueChanged<String>? onSubmitted;
+
+  /// A widget at the end of the field, inside its outline.
+  final Widget? suffix;
+
+  /// Whether the field takes focus as soon as it appears.
+  final bool autofocus;
+
+  /// What the keyboard's action key does.
+  final TextInputAction? textInputAction;
 
   /// Whether to hide the text, for passwords.
   final bool obscureText;
@@ -110,6 +123,8 @@ class _GlimmerTextFieldState extends State<GlimmerTextField> {
               child: TextField(
                 controller: widget.controller,
                 focusNode: _focusNode,
+                autofocus: widget.autofocus,
+                textInputAction: widget.textInputAction,
                 onChanged: widget.onChanged,
                 onSubmitted: widget.onSubmitted,
                 obscureText: widget.obscureText,
@@ -136,6 +151,10 @@ class _GlimmerTextFieldState extends State<GlimmerTextField> {
               ),
             ),
           ),
+          if (widget.suffix != null) ...[
+            SizedBox(width: spacing.small),
+            widget.suffix!,
+          ],
         ],
       ),
     );
@@ -417,4 +436,305 @@ class _GlimmerProgressPainter extends CustomPainter {
       old.track != track ||
       old.active != active ||
       old.edge != edge;
+}
+
+/// A ring of light, for progress with no bar to put it in.
+///
+/// Determinate: an arc runs from the top, brightening toward its leading end so
+/// the ring reads as light arriving rather than as a gauge filling. Not
+/// determinate: a tapered arc travels the ring, the same highlight the bar
+/// sends along its track.
+///
+/// ```dart
+/// GlimmerCircularProgress(value: 0.6)
+/// ```
+class GlimmerCircularProgress extends StatefulWidget {
+  /// Creates a circular progress ring.
+  const GlimmerCircularProgress({
+    super.key,
+    this.value,
+    this.size = 40,
+    this.strokeWidth = 4,
+  });
+
+  /// Progress between 0 and 1, or null for indeterminate.
+  final double? value;
+
+  /// The ring's diameter.
+  final double size;
+
+  /// How thick the ring is.
+  final double strokeWidth;
+
+  /// How long the indeterminate arc takes to travel the ring once.
+  static const sweepDuration = Duration(milliseconds: 1600);
+
+  @override
+  State<GlimmerCircularProgress> createState() =>
+      _GlimmerCircularProgressState();
+}
+
+class _GlimmerCircularProgressState extends State<GlimmerCircularProgress>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _sweep = AnimationController(
+    vsync: this,
+    duration: GlimmerCircularProgress.sweepDuration,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _syncSweep();
+  }
+
+  @override
+  void didUpdateWidget(GlimmerCircularProgress oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncSweep();
+  }
+
+  @override
+  void dispose() {
+    _sweep.dispose();
+    super.dispose();
+  }
+
+  void _syncSweep() {
+    if (widget.value == null) {
+      if (!_sweep.isAnimating) _sweep.repeat();
+    } else if (_sweep.isAnimating) {
+      _sweep.stop();
+      _sweep.value = 0;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = GlimmerTheme.colorsOf(context);
+    final value = widget.value;
+
+    return Semantics(
+      value: value == null ? null : '${(value * 100).round()}%',
+      child: SizedBox(
+        width: widget.size,
+        height: widget.size,
+        child: AnimatedBuilder(
+          animation: _sweep,
+          builder: (context, child) => CustomPaint(
+            painter: _GlimmerRingPainter(
+              value: value,
+              sweep: _sweep.value,
+              strokeWidth: widget.strokeWidth,
+              track: colors.surface,
+              active: colors.primary,
+              edge: colors.outline,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GlimmerRingPainter extends CustomPainter {
+  const _GlimmerRingPainter({
+    required this.value,
+    required this.sweep,
+    required this.strokeWidth,
+    required this.track,
+    required this.active,
+    required this.edge,
+  });
+
+  final double? value;
+  final double sweep;
+  final double strokeWidth;
+  final Color track;
+  final Color active;
+  final Color edge;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final radius = (size.shortestSide - strokeWidth) / 2;
+    if (radius <= 0) return;
+    final rect = Rect.fromCircle(
+      center: size.center(Offset.zero),
+      radius: radius,
+    );
+
+    // The unlit ring, with the graded edge the surfaces carry.
+    canvas.drawCircle(
+      rect.center,
+      radius,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.alphaBlend(edge.withValues(alpha: 0.5), track),
+            track,
+          ],
+        ).createShader(rect),
+    );
+
+    const top = -math.pi / 2;
+    final progress = value;
+
+    if (progress != null) {
+      final extent = progress.clamp(0.0, 1.0) * 2 * math.pi;
+      if (extent <= 0) return;
+      canvas.drawArc(
+        rect,
+        top,
+        extent,
+        false,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = strokeWidth
+          ..strokeCap = StrokeCap.round
+          ..shader = SweepGradient(
+            startAngle: 0,
+            endAngle: 2 * math.pi,
+            transform: const GradientRotation(top),
+            colors: [
+              active.withValues(alpha: 0.35),
+              active,
+              Color.lerp(active, const Color(0xFFFFFFFF), 0.5)!,
+            ],
+            stops: [
+              0,
+              progress.clamp(0.0, 1.0) * 0.7,
+              progress.clamp(0.0, 1.0)
+            ],
+          ).createShader(rect),
+      );
+      return;
+    }
+
+    // A quarter of the ring, travelling, tapered at both ends.
+    const arc = math.pi / 2;
+    final start = top + (sweep * 2 * math.pi);
+    canvas.drawArc(
+      rect,
+      start,
+      arc,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round
+        ..shader = SweepGradient(
+          startAngle: 0,
+          endAngle: 2 * math.pi,
+          transform: GradientRotation(start),
+          colors: [
+            active.withValues(alpha: 0),
+            Color.lerp(active, const Color(0xFFFFFFFF), 0.4)!,
+            active.withValues(alpha: 0),
+          ],
+          stops: const [0, 0.125, 0.25],
+        ).createShader(rect),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_GlimmerRingPainter old) =>
+      old.value != value ||
+      old.sweep != sweep ||
+      old.strokeWidth != strokeWidth ||
+      old.track != track ||
+      old.active != active ||
+      old.edge != edge;
+}
+
+/// A field for searching, with a clear button once there is something in it.
+///
+/// The same field as [GlimmerTextField] with the parts a search box always
+/// needs: the leading icon, the clear affordance, and a keyboard that submits
+/// rather than adding a newline.
+///
+/// ```dart
+/// GlimmerSearchField(
+///   hint: 'Search the list',
+///   onChanged: model.filter,
+/// )
+/// ```
+class GlimmerSearchField extends StatefulWidget {
+  /// Creates a search field.
+  const GlimmerSearchField({
+    super.key,
+    this.controller,
+    this.hint = 'Search',
+    this.onChanged,
+    this.onSubmitted,
+    this.autofocus = false,
+  });
+
+  /// An external controller for the field's text.
+  final TextEditingController? controller;
+
+  /// Placeholder text shown while the field is empty.
+  final String hint;
+
+  /// Called on every edit, including when the field is cleared.
+  final ValueChanged<String>? onChanged;
+
+  /// Called when the user submits from the keyboard.
+  final ValueChanged<String>? onSubmitted;
+
+  /// Whether the field takes focus as soon as it appears.
+  final bool autofocus;
+
+  @override
+  State<GlimmerSearchField> createState() => _GlimmerSearchFieldState();
+}
+
+class _GlimmerSearchFieldState extends State<GlimmerSearchField> {
+  late final TextEditingController _controller =
+      widget.controller ?? TextEditingController();
+  late final bool _ownsController = widget.controller == null;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onChanged);
+    if (_ownsController) _controller.dispose();
+    super.dispose();
+  }
+
+  void _onChanged() => setState(() {});
+
+  void _clear() {
+    _controller.clear();
+    widget.onChanged?.call('');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GlimmerTextField(
+      controller: _controller,
+      hint: widget.hint,
+      prefixIcon: Icons.search,
+      autofocus: widget.autofocus,
+      keyboardType: TextInputType.text,
+      textInputAction: TextInputAction.search,
+      onChanged: widget.onChanged,
+      onSubmitted: widget.onSubmitted,
+      suffix: _controller.text.isEmpty
+          ? null
+          : GlimmerIconButton(
+              icon: Icons.close,
+              size: 32,
+              tooltip: 'Clear',
+              onPressed: _clear,
+            ),
+    );
+  }
 }

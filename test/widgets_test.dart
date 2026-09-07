@@ -2099,4 +2099,242 @@ void main() {
       expect(tokens.depth.level3.recede, greaterThan(0));
     });
   });
+
+  group('selection', () {
+    testWidgets('a checkbox reports its new value from box or label',
+        (tester) async {
+      var value = false;
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: StatefulBuilder(
+              builder: (context, setState) => GlimmerCheckbox(
+                value: value,
+                label: 'Weekly digest',
+                onChanged: (next) => setState(() => value = next),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(GlimmerSurface).first);
+      await tester.pumpAndSettle();
+      expect(value, isTrue);
+
+      await tester.tap(find.text('Weekly digest'));
+      await tester.pumpAndSettle();
+      expect(value, isFalse);
+    });
+
+    testWidgets('a checkbox announces its state', (tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: GlimmerCheckbox(
+              value: true,
+              label: 'Weekly digest',
+              onChanged: (_) {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getSemantics(find.byType(GlimmerCheckbox)),
+        matchesSemantics(
+          isChecked: true,
+          hasCheckedState: true,
+          hasEnabledState: true,
+          isEnabled: true,
+          label: 'Weekly digest',
+          hasTapAction: true,
+        ),
+        reason: 'the visible label should be announced once, not twice',
+      );
+      handle.dispose();
+    });
+
+    testWidgets('a radio group reports the value that was chosen',
+        (tester) async {
+      String? chosen = 'Light';
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: StatefulBuilder(
+              builder: (context, setState) => Column(
+                children: [
+                  for (final roast in const ['Light', 'Medium'])
+                    GlimmerRadio<String>(
+                      value: roast,
+                      groupValue: chosen,
+                      label: roast,
+                      onChanged: (value) => setState(() => chosen = value),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Medium'));
+      await tester.pumpAndSettle();
+      expect(chosen, 'Medium');
+    });
+
+    testWidgets('a disabled control is dimmed and inert', (tester) async {
+      await tester.pumpWidget(
+        const MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: GlimmerCheckbox(
+              value: false,
+              label: 'Weekly digest',
+              onChanged: null,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final surface = tester.widget<GlimmerSurface>(
+        find.byType(GlimmerSurface).first,
+      );
+      expect(surface.onTap, isNull);
+
+      final opacity = tester.widget<AnimatedOpacity>(
+        find.descendant(
+          of: find.byType(GlimmerCheckbox),
+          matching: find.byType(AnimatedOpacity),
+        ),
+      );
+      expect(opacity.opacity, lessThan(1));
+    });
+
+    testWidgets('tabs move a marker rather than the labels', (tester) async {
+      var index = 0;
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: StatefulBuilder(
+              builder: (context, setState) => GlimmerTabs(
+                labels: const ['All', 'Open', 'Closed'],
+                selectedIndex: index,
+                onChanged: (next) => setState(() => index = next),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final before = tester.getTopLeft(find.text('Open'));
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      expect(index, 1);
+
+      // The labels stay put; only the light travels.
+      expect(tester.getTopLeft(find.text('Open')), before);
+    });
+  });
+
+  group('small pieces', () {
+    testWidgets('an avatar falls back to initials', (tester) async {
+      expect(GlimmerAvatar.initialsOf('Ana Ribeiro'), 'AR');
+      expect(GlimmerAvatar.initialsOf('Ana'), 'AN');
+      expect(GlimmerAvatar.initialsOf('   '), '');
+
+      await tester.pumpWidget(
+        const MaterialGlimmerApp(
+          home: GlimmerScaffold(body: GlimmerAvatar(label: 'Ana Ribeiro')),
+        ),
+      );
+      expect(find.text('AR'), findsOneWidget);
+    });
+
+    testWidgets('a badge caps its count', (tester) async {
+      await tester.pumpWidget(
+        const MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: GlimmerBadge(count: 140, child: Icon(Icons.inbox)),
+          ),
+        ),
+      );
+      expect(find.text('99+'), findsOneWidget);
+    });
+
+    testWidgets('a circular ring sweeps only when it has no value',
+        (tester) async {
+      await tester.pumpWidget(
+        const MaterialGlimmerApp(
+          home: GlimmerScaffold(body: GlimmerCircularProgress()),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(tester.hasRunningAnimations, isTrue);
+
+      await tester.pumpWidget(
+        const MaterialGlimmerApp(
+          home: GlimmerScaffold(body: GlimmerCircularProgress(value: 0.5)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.hasRunningAnimations, isFalse);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+    });
+
+    testWidgets('a search field clears itself', (tester) async {
+      final changes = <String>[];
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: GlimmerSearchField(onChanged: changes.add),
+          ),
+        ),
+      );
+
+      // No clear button until there is something to clear.
+      expect(find.byIcon(Icons.close), findsNothing);
+
+      await tester.enterText(find.byType(TextField), 'coffee');
+      await tester.pumpAndSettle();
+      expect(changes.last, 'coffee');
+      expect(find.byIcon(Icons.close), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+      expect(changes.last, '');
+      expect(find.byIcon(Icons.close), findsNothing);
+    });
+
+    testWidgets('an expansion tile opens and closes', (tester) async {
+      final states = <bool>[];
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: GlimmerExpansionTile(
+              label: 'Delivery',
+              onExpansionChanged: states.add,
+              children: const [GlimmerListItem(label: 'Leave next door')],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Leave next door'), findsNothing);
+
+      await tester.tap(find.text('Delivery'));
+      await tester.pumpAndSettle();
+      expect(find.text('Leave next door'), findsOneWidget);
+      expect(states, [true]);
+
+      await tester.tap(find.text('Delivery'));
+      await tester.pumpAndSettle();
+      expect(find.text('Leave next door'), findsNothing);
+      expect(states, [true, false]);
+    });
+  });
 }

@@ -67,6 +67,18 @@ First release.
 - `GlimmerProgressBar`, drawn rather than borrowed. The determinate bar is the
   slider's lit track with a glow at the leading end; the indeterminate one
   sends a tapered highlight along the track instead of sliding a block.
+- Selection controls, none of which ripple. `GlimmerCheckbox` traces its tick
+  on rather than fading it in, `GlimmerRadio` springs its dot out of the centre
+  with a halo under it, and `GlimmerTabs` slides a lit marker between choices
+  while the labels stay put. It is a segmented control and a tab bar at once.
+- `GlimmerCircularProgress`, a ring of light. Determinate brightens toward the
+  leading end of the arc; indeterminate travels a tapered arc round the ring.
+- `GlimmerSearchField`, `GlimmerTextField` with the parts a search box always
+  needs. `GlimmerTextField` gained `suffix`, `autofocus` and `textInputAction`.
+- `GlimmerExpansionTile`, a row that opens by growing rather than by fading, so
+  glass in the body keeps its backdrop the whole way down.
+- `GlimmerDivider`, graded light rather than a flat rule. `GlimmerBadge` and
+  `GlimmerAvatar`, both carrying the same lit edge.
 - Input and structure: `GlimmerTextField`, `GlimmerSwitch`, `GlimmerSlider`,
   `GlimmerScaffold` and `GlimmerTopBar`.
 - Additive surfaces, composited with `BlendMode.plus`, so a surface on dark adds

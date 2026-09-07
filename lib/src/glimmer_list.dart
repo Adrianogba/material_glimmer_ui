@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 
@@ -456,6 +458,123 @@ class GlimmerScrim extends StatelessWidget {
         ).createShader(bounds);
       },
       child: child,
+    );
+  }
+}
+
+/// A row that opens to show more.
+///
+/// The header is a [GlimmerListItem], so it carries the same lit edge and the
+/// same press state as every other row, and the chevron turns on the focus
+/// curve rather than snapping.
+///
+/// The body is revealed by growing the row rather than by fading it in. A fade
+/// would put the body in a layer of its own, and any glass inside it would go
+/// flat until the animation finished; instead the surfaces below arrive
+/// through [GlimmerEntrance] while the row makes room for them.
+///
+/// ```dart
+/// GlimmerExpansionTile(
+///   label: 'Delivery',
+///   supportingLabel: 'Thursday, before noon',
+///   children: [GlimmerListItem(label: 'Leave with a neighbour')],
+/// )
+/// ```
+class GlimmerExpansionTile extends StatefulWidget {
+  /// Creates an expandable row.
+  const GlimmerExpansionTile({
+    super.key,
+    required this.label,
+    required this.children,
+    this.supportingLabel,
+    this.leadingIcon,
+    this.initiallyExpanded = false,
+    this.onExpansionChanged,
+  });
+
+  /// The header's primary text.
+  final String label;
+
+  /// Secondary text under [label].
+  final String? supportingLabel;
+
+  /// An icon at the start of the header.
+  final IconData? leadingIcon;
+
+  /// What the row reveals.
+  final List<Widget> children;
+
+  /// Whether the row starts open.
+  final bool initiallyExpanded;
+
+  /// Called with the new state whenever the row is opened or closed.
+  final ValueChanged<bool>? onExpansionChanged;
+
+  @override
+  State<GlimmerExpansionTile> createState() => _GlimmerExpansionTileState();
+}
+
+class _GlimmerExpansionTileState extends State<GlimmerExpansionTile> {
+  late bool _expanded = widget.initiallyExpanded;
+
+  void _toggle() {
+    setState(() => _expanded = !_expanded);
+    widget.onExpansionChanged?.call(_expanded);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = GlimmerTheme.of(context);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GlimmerListItem(
+          label: widget.label,
+          supportingLabel: widget.supportingLabel,
+          leadingIcon: widget.leadingIcon,
+          selected: _expanded,
+          onTap: _toggle,
+          trailing: TweenAnimationBuilder<double>(
+            tween: Tween<double>(end: _expanded ? 0.5 : 0),
+            duration: GlimmerMotion.focusExitDuration,
+            curve: GlimmerMotion.focusCurve,
+            builder: (context, turns, child) => Transform.rotate(
+              angle: turns * 2 * math.pi,
+              child: child,
+            ),
+            child: Icon(
+              Icons.expand_more,
+              size: tokens.iconSizes.small,
+              color: tokens.colors.outline,
+            ),
+          ),
+        ),
+        // The row grows; nothing is faded. AnimatedSize clips rather than
+        // isolating, so a surface inside the body keeps reading its backdrop
+        // the whole way down.
+        AnimatedSize(
+          duration: GlimmerMotion.focusExitDuration,
+          curve: GlimmerMotion.focusCurve,
+          alignment: Alignment.topCenter,
+          child: _expanded
+              ? Padding(
+                  padding: EdgeInsets.only(top: tokens.spacing.small),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final child in widget.children) ...[
+                        child,
+                        SizedBox(height: tokens.spacing.small),
+                      ],
+                    ],
+                  ),
+                )
+              : const SizedBox(width: double.infinity),
+        ),
+      ],
     );
   }
 }

@@ -271,6 +271,10 @@ class _ComponentsPageState extends State<_ComponentsPage> {
   var _listening = true;
   var _immersive = false;
   var _progress = 0.4;
+  var _digest = true;
+  var _roast = 'Medium';
+  var _filter = 0;
+  var _query = '';
 
   static const _pagerPages = <(String, String, IconData)>[
     ('Museu do Café', 'Santos, open until five', Icons.museum_outlined),
@@ -479,6 +483,80 @@ class _ComponentsPageState extends State<_ComponentsPage> {
             ),
             SizedBox(width: spacing.extraLarge),
             GlimmerVoiceInputIndicator(listening: _listening),
+          ],
+        ),
+        SizedBox(height: spacing.extraLarge),
+        const _SectionLabel('Choosing'),
+        SizedBox(height: spacing.small),
+        Text(
+          'A tick that is drawn on, a dot that springs out, and a marker that '
+          'slides between choices.',
+          style:
+              tokens.typography.caption.copyWith(color: tokens.colors.outline),
+        ),
+        SizedBox(height: spacing.medium),
+        GlimmerCheckbox(
+          value: _digest,
+          label: 'Send me the weekly digest',
+          onChanged: (value) => setState(() => _digest = value),
+        ),
+        for (final roast in const ['Light', 'Medium', 'Dark'])
+          GlimmerRadio<String>(
+            value: roast,
+            groupValue: _roast,
+            label: '$roast roast',
+            onChanged: (value) => setState(() => _roast = value),
+          ),
+        SizedBox(height: spacing.medium),
+        GlimmerTabs(
+          labels: const ['All', 'Open', 'Closed'],
+          selectedIndex: _filter,
+          onChanged: (index) => setState(() => _filter = index),
+        ),
+        SizedBox(height: spacing.extraLarge),
+        const _SectionLabel('Small pieces'),
+        SizedBox(height: spacing.medium),
+        GlimmerSearchField(
+          hint: 'Search the list',
+          onChanged: (value) => setState(() => _query = value),
+        ),
+        SizedBox(height: spacing.medium),
+        Row(
+          children: [
+            const GlimmerAvatar(label: 'Ana Ribeiro'),
+            SizedBox(width: spacing.medium),
+            const GlimmerAvatar(icon: Icons.storefront, size: 32),
+            SizedBox(width: spacing.large),
+            GlimmerBadge(
+              count: _query.isEmpty ? 3 : _query.length,
+              child: GlimmerIconButton(
+                icon: Icons.notifications_outlined,
+                tooltip: 'Notifications',
+                onPressed: () {},
+              ),
+            ),
+            SizedBox(width: spacing.large),
+            const GlimmerCircularProgress(size: 32),
+            SizedBox(width: spacing.medium),
+            const GlimmerCircularProgress(value: 0.65, size: 32),
+          ],
+        ),
+        SizedBox(height: spacing.large),
+        const GlimmerDivider(),
+        SizedBox(height: spacing.large),
+        GlimmerExpansionTile(
+          label: 'Delivery',
+          supportingLabel: 'Thursday, before noon',
+          leadingIcon: Icons.local_shipping_outlined,
+          children: const [
+            GlimmerListItem(
+              label: 'Leave with a neighbour',
+              leadingIcon: Icons.home_outlined,
+            ),
+            GlimmerListItem(
+              label: 'Ring the bell twice',
+              leadingIcon: Icons.notifications_active_outlined,
+            ),
           ],
         ),
         SizedBox(height: spacing.extraLarge),
