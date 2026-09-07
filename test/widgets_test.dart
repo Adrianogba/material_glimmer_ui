@@ -2445,4 +2445,155 @@ void main() {
       expect(theme.textSelectionTheme.selectionColor!.a, closeTo(0.3, 1e-6));
     });
   });
+
+  group('chips', () {
+    testWidgets('selection is the focus treatment, not a fill swap',
+        (tester) async {
+      var taps = 0;
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: GlimmerChip(
+              label: 'Open now',
+              selected: true,
+              onPressed: () => taps++,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final surface = tester.widget<GlimmerSurface>(
+        find.byType(GlimmerSurface),
+      );
+      expect(surface.focused, isTrue);
+      expect(surface.color, isNull, reason: 'a chip should not swap its fill');
+
+      await tester.tap(find.text('Open now'));
+      expect(taps, 1);
+    });
+
+    testWidgets('a delete affordance appears only when it is wired up',
+        (tester) async {
+      var deleted = 0;
+      await tester.pumpWidget(
+        const MaterialGlimmerApp(
+          home: GlimmerScaffold(body: GlimmerChip(label: 'Santos')),
+        ),
+      );
+      expect(find.byIcon(Icons.close), findsNothing);
+
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: GlimmerChip(label: 'Santos', onDeleted: () => deleted++),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.close));
+      expect(deleted, 1);
+    });
+  });
+
+  group('skeleton', () {
+    testWidgets('a placeholder keeps sweeping and says nothing out loud',
+        (tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(
+        const MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            // The scaffold gives its body tight constraints, so a bare
+            // SizedBox would be stretched to the screen.
+            body: Center(child: GlimmerSkeleton(width: 120, height: 16)),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(tester.hasRunningAnimations, isTrue);
+      expect(tester.getSize(find.byType(GlimmerSkeleton)), const Size(120, 16));
+
+      // A screen reader should not read out a row of placeholders.
+      expect(
+        find.descendant(
+          of: find.byType(GlimmerSkeleton),
+          matching: find.byType(ExcludeSemantics),
+        ),
+        findsWidgets,
+      );
+      handle.dispose();
+    });
+
+    testWidgets('lines builds a paragraph with a short last line',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialGlimmerApp(
+          home: GlimmerScaffold(
+            body: Center(
+              child: SizedBox(
+                width: 200,
+                child: GlimmerSkeleton.lines(count: 3),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final widths = tester
+          .widgetList<GlimmerSkeleton>(find.byType(GlimmerSkeleton))
+          .toList();
+      expect(widths.length, 3);
+
+      final sizes = find
+          .byType(GlimmerSkeleton)
+          .evaluate()
+          .map((e) => (e.renderObject! as RenderBox).size.width)
+          .toList();
+      expect(sizes[0], sizes[1]);
+      expect(sizes[2], lessThan(sizes[1]));
+    });
+  });
+
+  group('scrollbar', () {
+    Widget host(TargetPlatform platform) => MaterialApp(
+          theme: GlimmerTheme.dark().copyWith(platform: platform),
+          scrollBehavior: const GlimmerScrollBehavior(),
+          home: Scaffold(
+            body: ListView(
+              children: List.generate(40, (i) => Text('Row $i')),
+            ),
+          ),
+        );
+
+    testWidgets('the desktop platforms get the Glimmer bar', (tester) async {
+      for (final platform in [
+        TargetPlatform.windows,
+        TargetPlatform.macOS,
+        TargetPlatform.linux,
+      ]) {
+        await tester.pumpWidget(host(platform));
+        await tester.pumpAndSettle();
+        expect(
+          find.byType(GlimmerScrollbar),
+          findsOneWidget,
+          reason: '$platform should get the Glimmer scrollbar',
+        );
+        // Material's bar draws a track behind its thumb, which is an opaque
+        // stripe over whatever a glass surface was letting through.
+        expect(find.byType(Scrollbar), findsNothing);
+      }
+    });
+
+    testWidgets('a phone gets no persistent bar', (tester) async {
+      for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
+        await tester.pumpWidget(host(platform));
+        await tester.pumpAndSettle();
+        expect(find.byType(GlimmerScrollbar), findsNothing);
+        expect(find.byType(Scrollbar), findsNothing);
+      }
+    });
+  });
 }

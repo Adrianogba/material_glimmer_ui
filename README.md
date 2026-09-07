@@ -142,8 +142,10 @@ opens from the middle outward and a bloom brightest where the push lands, both
 following how hard the list is pushed and falling away on the spring everything
 else settles with.
 
-`MaterialGlimmerApp` installs it through `GlimmerScrollBehavior`. Pass your own
-`scrollBehavior` to opt out.
+`MaterialGlimmerApp` installs it through `GlimmerScrollBehavior`, which also
+swaps the scrollbar. Material draws its thumb on a solid track, and a track is
+an opaque stripe over whatever a glass surface was letting through, so
+`GlimmerScrollbar` has none. Pass your own `scrollBehavior` to opt out.
 
 `GlimmerRefreshIndicator` is the same light doing more work. Pull past the top
 and the edge brightens with the pull; let go past the trigger and it holds and
@@ -183,9 +185,9 @@ Navigator.of(context).push(
 `GlimmerIconButton` · `GlimmerIconToggleButton`
 
 **Content.**
-`GlimmerText` · `GlimmerIcon` · `GlimmerTitleChip` · `GlimmerTooltip` ·
-`GlimmerDivider` · `GlimmerBadge` · `GlimmerAvatar` ·
-`GlimmerVoiceInputIndicator`
+`GlimmerText` · `GlimmerIcon` · `GlimmerTitleChip` · `GlimmerChip` ·
+`GlimmerChipGroup` · `GlimmerTooltip` · `GlimmerDivider` · `GlimmerBadge` ·
+`GlimmerAvatar` · `GlimmerSkeleton` · `GlimmerVoiceInputIndicator`
 
 **Collections.**
 `GlimmerList` · `GlimmerListItem` · `GlimmerExpansionTile` · `GlimmerStack` ·
@@ -208,7 +210,7 @@ Navigator.of(context).push(
 `GlimmerShapes` · `GlimmerSpacing` · `GlimmerIconSizes` · `GlimmerDepth` ·
 `GlimmerMotion` · `GlimmerEdge` · `GlimmerEdgeBlur` · `GlimmerTone` ·
 `GlimmerEntrance` · `GlimmerScrollBehavior` · `GlimmerOverscrollIndicator` ·
-`GlimmerPageRoute` · `GlimmerScale`
+`GlimmerScrollbar` · `GlimmerPageRoute` · `GlimmerScale`
 
 ## Two scales
 

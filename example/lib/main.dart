@@ -275,6 +275,8 @@ class _ComponentsPageState extends State<_ComponentsPage> {
   var _roast = 'Medium';
   var _filter = 0;
   var _query = '';
+  final _tags = <String>{'Open now'};
+  var _loading = true;
 
   static const _pagerPages = <(String, String, IconData)>[
     ('Museu do Café', 'Santos, open until five', Icons.museum_outlined),
@@ -512,6 +514,79 @@ class _ComponentsPageState extends State<_ComponentsPage> {
           labels: const ['All', 'Open', 'Closed'],
           selectedIndex: _filter,
           onChanged: (index) => setState(() => _filter = index),
+        ),
+        SizedBox(height: spacing.medium),
+        GlimmerChipGroup(
+          children: [
+            for (final tag in const ['Open now', 'Outdoors', 'Free entry'])
+              GlimmerChip(
+                label: tag,
+                icon: _tags.contains(tag) ? Icons.check : null,
+                selected: _tags.contains(tag),
+                onPressed: () => setState(
+                  () =>
+                      _tags.contains(tag) ? _tags.remove(tag) : _tags.add(tag),
+                ),
+              ),
+            GlimmerChip(
+              label: 'Santos',
+              avatar: const GlimmerAvatar(label: 'Santos', size: 20),
+              onDeleted: () {},
+            ),
+          ],
+        ),
+        SizedBox(height: spacing.extraLarge),
+        const _SectionLabel('Waiting'),
+        SizedBox(height: spacing.small),
+        Text(
+          'A placeholder is the shape of what is coming with light passing '
+          'over it, not a grey block with a band sliding behind a window.',
+          style:
+              tokens.typography.caption.copyWith(color: tokens.colors.outline),
+        ),
+        SizedBox(height: spacing.medium),
+        GlimmerCard(
+          child: _loading
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const GlimmerSkeleton(
+                      width: 40,
+                      height: 40,
+                      borderRadius: BorderRadius.all(Radius.circular(999)),
+                    ),
+                    SizedBox(width: spacing.medium),
+                    Expanded(child: GlimmerSkeleton.lines()),
+                  ],
+                )
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const GlimmerAvatar(label: 'Ana Ribeiro'),
+                    SizedBox(width: spacing.medium),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Ana Ribeiro',
+                              style: tokens.typography.titleSmall),
+                          SizedBox(height: spacing.extraSmall),
+                          Text(
+                            'Left a note about the delivery window on '
+                            'Thursday morning.',
+                            style: tokens.typography.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+        SizedBox(height: spacing.medium),
+        GlimmerButton(
+          label: _loading ? 'Load the content' : 'Back to waiting',
+          expand: true,
+          onPressed: () => setState(() => _loading = !_loading),
         ),
         SizedBox(height: spacing.extraLarge),
         const _SectionLabel('Small pieces'),

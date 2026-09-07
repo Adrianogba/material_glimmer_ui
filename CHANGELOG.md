@@ -79,6 +79,14 @@ First release.
   glass in the body keeps its backdrop the whole way down.
 - `GlimmerDivider`, graded light rather than a flat rule. `GlimmerBadge` and
   `GlimmerAvatar`, both carrying the same lit edge.
+- `GlimmerChip` and `GlimmerChipGroup`. Selecting one is the focus treatment
+  rather than a background swapping colour, so a chosen chip lights up.
+- `GlimmerSkeleton`, a placeholder as the shape of the missing content with
+  light passing over it, rather than a grey block with a band sliding behind a
+  window. `GlimmerSkeleton.lines` builds a paragraph with the last line short.
+- `GlimmerScrollbar`, installed by `GlimmerScrollBehavior` on the platforms
+  that show one. No track, a thinner thumb in the outline colour, and it fades
+  once scrolling stops.
 - `GlimmerTextSelection`, the part of a text field a finger actually touches.
   Round lit handles instead of teardrops, a glass `GlimmerTextSelectionMenu`
   instead of the Cut/Copy/Paste slab, and a magnifier with a surface's graded
