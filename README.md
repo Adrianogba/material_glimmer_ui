@@ -29,6 +29,58 @@ one. `GlimmerTheme` returns a real `ThemeData` with every token in a
 Material widget dropped next to one of these inherits the same palette and type
 instead of clashing with it.
 
+## What it looks like
+
+<table>
+  <tr>
+    <td width="50%"><img src="doc/screenshots/hero-dark.png" alt="Cards over a backdrop on the dark theme"></td>
+    <td width="50%"><img src="doc/screenshots/hero-light.png" alt="The same screen on the light theme"></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center"><em>Surfaces filter the backdrop rather than covering it. The same screen on both grounds.</em></td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td width="50%"><img src="doc/screenshots/controls-dark.png" alt="Checkbox, radios, tabs and chips on the dark theme"></td>
+    <td width="50%"><img src="doc/screenshots/controls-light.png" alt="The same controls on the light theme"></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center"><em>Selection is a lit edge, not a ripple or a fill swapping colour. The highlight runs toward white on a dark ground and toward ink on a light one.</em></td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td width="25%"><img src="doc/screenshots/dialog-dark.png" alt="A dialog with the app withdrawn behind it"></td>
+    <td width="25%"><img src="doc/screenshots/input-dark.png" alt="Text field, switch, slider and progress bars"></td>
+    <td width="25%"><img src="doc/screenshots/pieces-dark.png" alt="Search field, avatars, badge, progress rings and an expansion tile"></td>
+    <td width="25%"><img src="doc/screenshots/foundations-light.png" alt="The type scale and the five depth levels"></td>
+  </tr>
+  <tr>
+    <td align="center"><em>Depth: nothing casts a shadow, the plane behind withdraws.</em></td>
+    <td align="center"><em>Input, none of it Material's.</em></td>
+    <td align="center"><em>Small pieces, all drawn.</em></td>
+    <td align="center"><em>The tokens.</em></td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td width="40%"><img src="doc/screenshots/pull-to-refresh.gif" alt="Pulling a list past its top lights the edge"></td>
+    <td valign="middle">
+      <b>Pull to refresh without moving anything.</b><br><br>
+      The edge brightens with the pull, then holds and breathes while the work
+      runs. No spinner slides over the list and no gap opens above it, because
+      moving the content would put the scrollable in its own layer and every
+      glass surface in it would lose the backdrop it reads.<br><br>
+      <em>Captured frame by frame from a running emulator, so it plays back
+      slower than it runs.</em>
+    </td>
+  </tr>
+</table>
+
 ## Install
 
 ```sh
