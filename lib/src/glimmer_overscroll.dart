@@ -145,6 +145,7 @@ class _GlimmerOverscrollPainter extends CustomPainter {
     required this.tint,
     required this.leading,
     required this.trailing,
+    this.travel,
   });
 
   final AxisDirection axisDirection;
@@ -153,6 +154,14 @@ class _GlimmerOverscrollPainter extends CustomPainter {
   /// Which way contrast runs on this ground. See
   /// [GlimmerColors.highlightTint].
   final Color tint;
+
+  /// Where a travelling highlight sits along the leading edge, from 0 to 1,
+  /// or null when nothing is working.
+  ///
+  /// This is how the kit says "still going": the same tapered highlight
+  /// [GlimmerProgressBar] sends along its track and [GlimmerCircularProgress]
+  /// sends around its ring, on the edge the list ran into.
+  final double? travel;
   final double leading;
   final double trailing;
 
@@ -260,6 +269,35 @@ class _GlimmerOverscrollPainter extends CustomPainter {
           stops: const [0, 0.5, 1],
         ).createShader(line),
     );
+    // While something is working, a highlight travels the line. It is the same
+    // shape the progress bar sends along its track: wider than the line is
+    // thick, tapered at both ends, so it reads as light passing rather than as
+    // a mark sliding. The line underneath holds steady, so nothing about this
+    // state is a jump.
+    final position = travel;
+    if (position != null) {
+      final span = (to - from) * 0.36;
+      if (span > 0) {
+        final centre = from - (span / 2) + ((to - from + span) * position);
+        final band = vertical
+            ? Rect.fromLTWH(centre - (span / 2), line.top, span, line.height)
+            : Rect.fromLTWH(line.left, centre - (span / 2), line.width, span);
+        canvas.drawRect(
+          band,
+          Paint()
+            ..shader = LinearGradient(
+              begin: vertical ? Alignment.centerLeft : Alignment.topCenter,
+              end: vertical ? Alignment.centerRight : Alignment.bottomCenter,
+              colors: [
+                color.withValues(alpha: 0),
+                Color.lerp(color, tint, 0.55)!.withValues(alpha: 0.95),
+                color.withValues(alpha: 0),
+              ],
+              stops: const [0, 0.5, 1],
+            ).createShader(band),
+        );
+      }
+    }
   }
 
   /// How much of the edge the line covers at a given strength.
@@ -275,6 +313,7 @@ class _GlimmerOverscrollPainter extends CustomPainter {
       old.trailing != trailing ||
       old.color != color ||
       old.tint != tint ||
+      old.travel != travel ||
       old.axisDirection != axisDirection;
 }
 
@@ -328,11 +367,19 @@ class GlimmerRefreshIndicator extends StatefulWidget {
   /// arms one is a deliberate gesture rather than the end of a fling.
   static const triggerDistance = 120.0;
 
-  /// The floor the light holds at while the refresh runs.
+  /// How bright the edge holds while the refresh runs.
   ///
-  /// It breathes between this and full on [GlimmerMotion.ambientEnvelope], so
-  /// a list that is working never looks like a list that has simply stopped.
-  static const workingFloor = 0.55;
+  /// The pull eases to this rather than snapping to it. Dropping straight from
+  /// whatever the pull reached to a fixed level is a visible discontinuity at
+  /// the exact moment the finger lifts, which reads as a fault rather than as
+  /// a state change.
+  static const workingLevel = 0.7;
+
+  /// How long the highlight takes to travel the edge once while working.
+  static const travelDuration = Duration(milliseconds: 1100);
+
+  /// How long the edge takes to ease from the pull into the working hold.
+  static const settleIntoWork = Duration(milliseconds: 260);
 
   @override
   State<GlimmerRefreshIndicator> createState() =>
@@ -344,9 +391,9 @@ class _GlimmerRefreshIndicatorState extends State<GlimmerRefreshIndicator>
   late final AnimationController _pull = AnimationController.unbounded(
     vsync: this,
   )..addListener(_repaint);
-  late final AnimationController _pulse = AnimationController(
+  late final AnimationController _travel = AnimationController(
     vsync: this,
-    duration: GlimmerMotion.ambientPulseDuration,
+    duration: GlimmerRefreshIndicator.travelDuration,
   )..addListener(_repaint);
 
   bool _armed = false;
@@ -359,7 +406,7 @@ class _GlimmerRefreshIndicatorState extends State<GlimmerRefreshIndicator>
   @override
   void dispose() {
     _pull.dispose();
-    _pulse.dispose();
+    _travel.dispose();
     super.dispose();
   }
 
@@ -402,16 +449,24 @@ class _GlimmerRefreshIndicatorState extends State<GlimmerRefreshIndicator>
   Future<void> _run() async {
     _armed = false;
     _refreshing = true;
+    // Eased, not assigned. The edge is already lit at whatever the pull
+    // reached, and the working hold is a different level; moving between them
+    // in one frame is the jump that reads as a glitch.
     _pull
       ..stop()
-      ..value = 1;
-    _pulse.repeat();
+      ..animateTo(
+        GlimmerRefreshIndicator.workingLevel,
+        duration: GlimmerRefreshIndicator.settleIntoWork,
+        curve: GlimmerMotion.focusCurve,
+      );
+    _travel.repeat();
     try {
       await widget.onRefresh();
     } finally {
       if (mounted) {
-        _pulse.stop();
-        _pulse.value = 0;
+        _travel
+          ..stop()
+          ..value = 0;
         _refreshing = false;
         _settle();
       }
@@ -419,11 +474,9 @@ class _GlimmerRefreshIndicatorState extends State<GlimmerRefreshIndicator>
   }
 
   /// How bright the edge is right now.
-  double get _strength {
-    if (!_refreshing) return _pull.value.clamp(0.0, 1.0);
-    const floor = GlimmerRefreshIndicator.workingFloor;
-    return floor + ((1 - floor) * GlimmerMotion.ambientEnvelope(_pulse.value));
-  }
+  ///
+  /// One value for both states, so nothing jumps when the state changes.
+  double get _strength => _pull.value.clamp(0.0, 1.0);
 
   @override
   Widget build(BuildContext context) {
@@ -439,6 +492,7 @@ class _GlimmerRefreshIndicatorState extends State<GlimmerRefreshIndicator>
             tint: colors.highlightTint,
             leading: _strength,
             trailing: 0,
+            travel: _refreshing ? _travel.value : null,
           ),
           child: widget.child,
         ),

@@ -4,12 +4,12 @@ import 'package:material_glimmer_ui/material_glimmer_ui.dart';
 import 'package:material_glimmer_ui_example/main.dart';
 
 void main() {
-  testWidgets('the gallery opens on the overview page', (tester) async {
+  testWidgets('the gallery opens on the components page', (tester) async {
     await tester.pumpWidget(const MaterialGlimmerGallery());
     await tester.pump(const Duration(seconds: 1));
 
     expect(find.text('Material Glimmer UI'), findsOneWidget);
-    expect(find.text('Museu do Café'), findsOneWidget);
+    expect(find.text('Jabuticaba'), findsOneWidget);
     expect(find.byType(GlimmerCard), findsWidgets);
   });
 
@@ -49,7 +49,9 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
 
     Brightness brightnessInScope() =>
-        GlimmerTheme.of(tester.element(find.text('GLASS'))).colors.brightness;
+        GlimmerTheme.of(tester.element(find.text('CARD AND ACTIONS')))
+            .colors
+            .brightness;
 
     expect(brightnessInScope(), Brightness.dark);
 

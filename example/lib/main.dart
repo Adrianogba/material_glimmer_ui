@@ -289,52 +289,6 @@ class _ComponentsPageState extends State<_ComponentsPage> {
           ),
           SizedBox(height: spacing.extraLarge),
 
-          // Surfaces over something busy, which is where glass is actually
-          // visible.
-          const _SectionLabel('Glass'),
-          SizedBox(height: spacing.medium),
-          ClipRRect(
-            borderRadius: tokens.shapes.medium,
-            child: Stack(
-              children: [
-                const _Backdrop(),
-                Padding(
-                  padding: EdgeInsets.all(spacing.large),
-                  child: Column(
-                    children: [
-                      const GlimmerTitleChip(
-                        'Museu do Café',
-                        leadingIcon: Icons.place_outlined,
-                      ),
-                      SizedBox(
-                        height:
-                            GlimmerTitleChipDefaults.associatedContentSpacing(
-                                context),
-                      ),
-                      const GlimmerCard(
-                        title: 'Arrive 10:08',
-                        supportingText: 'Six minutes on foot, mostly shade',
-                        leadingIcon: Icons.directions_walk,
-                      ),
-                      SizedBox(height: spacing.medium),
-                      // No tint at all: the surface adds nothing and only blurs
-                      // what is behind it, so all there is to see is the backdrop
-                      // out of focus and the lit edge around it.
-                      const GlimmerCard(
-                        opacity: 0,
-                        blur: 22,
-                        title: 'Santos, 24 degrees',
-                        supportingText: 'Clear sun all day',
-                        leadingIcon: Icons.wb_sunny_outlined,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: spacing.extraLarge),
-
           const _SectionLabel('Card and actions'),
           SizedBox(height: spacing.medium),
           GlimmerCard(
@@ -400,21 +354,30 @@ class _ComponentsPageState extends State<_ComponentsPage> {
           SizedBox(height: spacing.extraLarge),
           const _SectionLabel('List with an integrated title'),
           SizedBox(height: spacing.medium),
-          for (final item in _groceries) ...[
-            GlimmerListItem(
-              label: item,
-              leadingIcon: _bought.contains(item)
-                  ? Icons.check_circle
-                  : Icons.circle_outlined,
-              selected: _bought.contains(item),
-              onTap: () => setState(
-                () => _bought.contains(item)
-                    ? _bought.remove(item)
-                    : _bought.add(item),
-              ),
-            ),
-            SizedBox(height: spacing.medium),
-          ],
+          // The title is the list's own, drawn as a GlimmerTitleChip above the
+          // rows. shrinkWrap and NeverScrollable because this one is inside
+          // the page's scroll view rather than owning it.
+          GlimmerList(
+            title: 'Grocery list',
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.zero,
+            children: [
+              for (final item in _groceries)
+                GlimmerListItem(
+                  label: item,
+                  leadingIcon: _bought.contains(item)
+                      ? Icons.check_circle
+                      : Icons.circle_outlined,
+                  selected: _bought.contains(item),
+                  onTap: () => setState(
+                    () => _bought.contains(item)
+                        ? _bought.remove(item)
+                        : _bought.add(item),
+                  ),
+                ),
+            ],
+          ),
           SizedBox(height: spacing.large),
           const _SectionLabel('Buttons'),
           SizedBox(height: spacing.medium),

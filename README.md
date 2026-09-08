@@ -37,7 +37,7 @@ instead of clashing with it.
     <td width="50%"><img src="https://raw.githubusercontent.com/Adrianogba/material_glimmer_ui/main/doc/screenshots/hero-light.png" alt="The same screen on the light theme"></td>
   </tr>
   <tr>
-    <td colspan="2" align="center"><em>Surfaces filter the backdrop rather than covering it. The same screen on both grounds.</em></td>
+    <td colspan="2" align="center"><em>The same screen on both grounds. Cards, actions, a stack and a list with its own title.</em></td>
   </tr>
 </table>
 
