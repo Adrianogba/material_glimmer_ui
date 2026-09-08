@@ -1,7 +1,7 @@
 name: material_glimmer_ui_example
 description: Gallery for material_glimmer_ui, showing every component in both themes.
 publish_to: none
-version: 1.0.0
+version: 0.6.0
 
 environment:
   sdk: ^3.6.0

@@ -2,7 +2,8 @@ include: package:flutter_lints/flutter.yaml
 
 analyzer:
   exclude:
-    - example/**
+    # example/ is deliberately not excluded. It was, and the gallery's own
+    # tests broke for several commits without the root analyze noticing.
     - build/**
     - android/**
     - ios/**

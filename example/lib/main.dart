@@ -962,7 +962,7 @@ class _AboutSheet extends StatelessWidget {
             Text('material_glimmer_ui', style: tokens.typography.titleMedium),
             SizedBox(height: tokens.spacing.extraSmall),
             Text(
-              'Version 1.0.0 · MIT',
+              'Version 0.6.0 · MIT',
               style: tokens.typography.caption.copyWith(
                 color: tokens.colors.secondary,
               ),

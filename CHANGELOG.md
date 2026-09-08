@@ -3,9 +3,15 @@
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and [Semantic Versioning](https://semver.org/).
 
-## 1.0.0
+## 0.6.0
 
-First release.
+First preview. The token set, the theme and the widget library are all here and
+in use, and the kit is being built against a real app rather than in the
+abstract. It is not 1.0 because of what is written under "Not done yet" in the
+README: no reduced-motion support, no right-to-left support, no golden tests,
+and only Android has actually been run.
+
+Breaking changes are likely before 1.0. Pin the version if that matters to you.
 
 ### Added
 

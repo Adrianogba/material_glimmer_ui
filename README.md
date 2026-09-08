@@ -33,8 +33,8 @@ instead of clashing with it.
 
 <table>
   <tr>
-    <td width="50%"><img src="doc/screenshots/hero-dark.png" alt="Cards over a backdrop on the dark theme"></td>
-    <td width="50%"><img src="doc/screenshots/hero-light.png" alt="The same screen on the light theme"></td>
+    <td width="50%"><img src="https://raw.githubusercontent.com/Adrianogba/material_glimmer_ui/main/doc/screenshots/hero-dark.png" alt="Cards over a backdrop on the dark theme"></td>
+    <td width="50%"><img src="https://raw.githubusercontent.com/Adrianogba/material_glimmer_ui/main/doc/screenshots/hero-light.png" alt="The same screen on the light theme"></td>
   </tr>
   <tr>
     <td colspan="2" align="center"><em>Surfaces filter the backdrop rather than covering it. The same screen on both grounds.</em></td>
@@ -43,8 +43,8 @@ instead of clashing with it.
 
 <table>
   <tr>
-    <td width="50%"><img src="doc/screenshots/controls-dark.png" alt="Checkbox, radios, tabs and chips on the dark theme"></td>
-    <td width="50%"><img src="doc/screenshots/controls-light.png" alt="The same controls on the light theme"></td>
+    <td width="50%"><img src="https://raw.githubusercontent.com/Adrianogba/material_glimmer_ui/main/doc/screenshots/controls-dark.png" alt="Checkbox, radios, tabs and chips on the dark theme"></td>
+    <td width="50%"><img src="https://raw.githubusercontent.com/Adrianogba/material_glimmer_ui/main/doc/screenshots/controls-light.png" alt="The same controls on the light theme"></td>
   </tr>
   <tr>
     <td colspan="2" align="center"><em>Selection is a lit edge, not a ripple or a fill swapping colour. The highlight runs toward white on a dark ground and toward ink on a light one.</em></td>
@@ -53,10 +53,10 @@ instead of clashing with it.
 
 <table>
   <tr>
-    <td width="25%"><img src="doc/screenshots/dialog-dark.png" alt="A dialog with the app withdrawn behind it"></td>
-    <td width="25%"><img src="doc/screenshots/input-dark.png" alt="Text field, switch, slider and progress bars"></td>
-    <td width="25%"><img src="doc/screenshots/pieces-dark.png" alt="Search field, avatars, badge, progress rings and an expansion tile"></td>
-    <td width="25%"><img src="doc/screenshots/foundations-light.png" alt="The type scale and the five depth levels"></td>
+    <td width="25%"><img src="https://raw.githubusercontent.com/Adrianogba/material_glimmer_ui/main/doc/screenshots/dialog-dark.png" alt="A dialog with the app withdrawn behind it"></td>
+    <td width="25%"><img src="https://raw.githubusercontent.com/Adrianogba/material_glimmer_ui/main/doc/screenshots/input-dark.png" alt="Text field, switch, slider and progress bars"></td>
+    <td width="25%"><img src="https://raw.githubusercontent.com/Adrianogba/material_glimmer_ui/main/doc/screenshots/pieces-dark.png" alt="Search field, avatars, badge, progress rings and an expansion tile"></td>
+    <td width="25%"><img src="https://raw.githubusercontent.com/Adrianogba/material_glimmer_ui/main/doc/screenshots/foundations-light.png" alt="The type scale and the five depth levels"></td>
   </tr>
   <tr>
     <td align="center"><em>Depth: nothing casts a shadow, the plane behind withdraws.</em></td>
@@ -68,7 +68,7 @@ instead of clashing with it.
 
 <table>
   <tr>
-    <td width="40%"><img src="doc/screenshots/pull-to-refresh.gif" alt="Pulling a list past its top lights the edge"></td>
+    <td width="40%"><img src="https://raw.githubusercontent.com/Adrianogba/material_glimmer_ui/main/doc/screenshots/pull-to-refresh.gif" alt="Pulling a list past its top lights the edge"></td>
     <td valign="middle">
       <b>Pull to refresh without moving anything.</b><br><br>
       The edge brightens with the pull, then holds and breathes while the work
@@ -312,6 +312,31 @@ ideas were read from: the git tree and blob ids of every file, and the date.
 `tool/fetch_reference.py` refreshes both the local mirror and that record. The
 mirror itself is not committed and not published, because it is Google's code
 under Apache 2.0 rather than ours.
+
+## Not done yet
+
+This is 0.6.0, and these are the edges. None of them is a surprise waiting to
+be found; they are listed here so you can decide whether they matter to you.
+
+- **Reduced motion is not honoured.** Nothing reads
+  `MediaQuery.disableAnimations`. The focus transition, the entrance, the
+  overscroll light, the skeleton sweep and the indeterminate progress all
+  animate regardless. The ambient sweep is opt-in partly for this reason, but
+  that is not the same as respecting the setting.
+- **No right-to-left support.** The kit uses `EdgeInsets` and `Alignment`
+  rather than their directional counterparts throughout, so a list item's
+  icons, a chip's delete affordance, the tab marker and the slider all read
+  left-to-right whatever the locale says.
+- **Only Android has been run.** The package declares six platforms because
+  nothing in it is platform-specific, but the effects lean on `BackdropFilter`,
+  which is exactly what behaves and performs differently on web. Treat the
+  other five as untested rather than as supported.
+- **No golden tests.** There are 153 widget and token tests, including pixel
+  assertions for the things that broke before, but no image comparisons. For a
+  design system that is a gap.
+- **A few built-in strings are English.** Most are parameters you can override.
+  `GlimmerSearchField`'s clear button is not one of them yet.
+- **No date or time picker.** The last real component gap.
 
 ## License
 
