@@ -17,3 +17,9 @@ build/
 # translating. It is Google's code under Apache 2.0, not ours, so it is not
 # committed and not published. Recreate it with tool/fetch_reference.dart.
 reference/
+
+# The upstream sources, read while working on the kit. Google's code under
+# Apache 2.0, not ours, in a repository that is MIT and public. It must never
+# be committed, and neither must the note of what was read from it.
+doc/google_androidx/
+doc/reference.md

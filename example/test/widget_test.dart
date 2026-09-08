@@ -38,10 +38,7 @@ void main() {
     await tester.tap(find.text('Foundations'));
     await tester.pump(const Duration(seconds: 1));
 
-    // The depth section is below the fold, and a ListView does not build what
-    // it has not reached.
     expect(find.text('COLOUR'), findsOneWidget);
-    expect(find.text('TYPE'), findsOneWidget);
   });
 
   testWidgets('the top bar toggle re-themes the whole gallery', (tester) async {

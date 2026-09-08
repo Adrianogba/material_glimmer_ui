@@ -125,7 +125,7 @@ class _ComponentsPageState extends State<_ComponentsPage> {
   var _refreshed = false;
   var _muted = false;
   var _listening = true;
-  var _immersive = false;
+  var _ambient = false;
   var _progress = 0.4;
   var _digest = true;
   var _roast = 'Medium';
@@ -678,14 +678,28 @@ class _ComponentsPageState extends State<_ComponentsPage> {
             prefixIcon: Icons.add,
           ),
           SizedBox(height: spacing.medium),
+          // The switch drives the card directly below it, so it is obvious
+          // what it is for. A toggle in a gallery that changes nothing is
+          // furniture.
           GlimmerListItem(
-            label: 'Immersive controls',
-            supportingLabel: 'Dim everything but the focused surface',
+            label: 'Ambient sweep',
+            supportingLabel:
+                'A highlight travels the edge of a focused surface',
             trailing: GlimmerSwitch(
-              value: _immersive,
-              label: 'Immersive controls',
-              onChanged: (value) => setState(() => _immersive = value),
+              value: _ambient,
+              label: 'Ambient sweep',
+              onChanged: (value) => setState(() => _ambient = value),
             ),
+          ),
+          SizedBox(height: spacing.medium),
+          GlimmerCard(
+            focused: true,
+            enableAmbientPulse: _ambient,
+            leadingIcon: Icons.auto_awesome,
+            title: 'Watch the edge',
+            supportingText: _ambient
+                ? 'The highlight runs once, waits, and runs again.'
+                : 'Turn the sweep on to see it.',
           ),
           SizedBox(height: spacing.large),
           GlimmerProgressBar(value: _progress),
@@ -732,16 +746,6 @@ class _FoundationsPage extends StatelessWidget {
       'outline': colors.outline,
     };
 
-    final styles = <String, TextStyle>{
-      'titleLarge': type.titleLarge,
-      'titleMedium': type.titleMedium,
-      'titleSmall': type.titleSmall,
-      'bodyLarge': type.bodyLarge,
-      'bodyMedium': type.bodyMedium,
-      'bodySmall': type.bodySmall,
-      'caption': type.caption,
-    };
-
     return ListView(
       padding: EdgeInsets.fromLTRB(spacing.large, 24, spacing.large, 24),
       children: [
@@ -770,58 +774,33 @@ class _FoundationsPage extends StatelessWidget {
           ],
         ),
         SizedBox(height: spacing.extraLarge),
-        const _SectionLabel('Type'),
-        SizedBox(height: spacing.medium),
-        for (final entry in styles.entries) ...[
-          Text(entry.key, style: entry.value),
-          Text(
-            '${entry.value.fontSize!.toStringAsFixed(1)} px, '
-            'w${entry.value.fontWeight!.value}',
-            style: type.caption.copyWith(color: colors.outline),
-          ),
-          SizedBox(height: spacing.medium),
-        ],
-        SizedBox(height: spacing.large),
-        const _SectionLabel('Depth'),
+        const _SectionLabel('Edge'),
         SizedBox(height: spacing.small),
         Text(
-          'Five levels, and none of them is a shadow. Glimmer says how high '
-          'something sits by taking the plane behind it away, so nothing casts '
-          'anything: a dialog at level 4 makes the app under it withdraw by '
-          'that much.',
+          'The border is not one colour. It is a gradient with a different '
+          'colour at each corner, brightest where the light lands, and it '
+          'turns a quarter as a surface takes focus.',
           style: type.caption.copyWith(color: colors.outline),
         ),
         SizedBox(height: spacing.medium),
-        for (var level = 1; level <= 5; level++) ...[
-          Row(
-            children: [
-              SizedBox(
-                width: 64,
-                child: Text('Level $level', style: type.caption),
+        Row(
+          children: [
+            const Expanded(
+              child: GlimmerCard(
+                title: 'Resting',
+                supportingText: '1.5 px',
               ),
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: tokens.shapes.small,
-                  child: SizedBox(
-                    height: 28,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        const _Backdrop(),
-                        ColoredBox(
-                          color: colors.background.withValues(
-                            alpha: tokens.depth[level].recede,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+            ),
+            SizedBox(width: spacing.medium),
+            const Expanded(
+              child: GlimmerCard(
+                focused: true,
+                title: 'Focused',
+                supportingText: '2 px, focal',
               ),
-            ],
-          ),
-          SizedBox(height: spacing.small),
-        ],
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -884,25 +863,6 @@ class _SectionLabel extends StatelessWidget {
       style: tokens.typography.caption.copyWith(
         color: tokens.colors.secondary,
         letterSpacing: 1.2,
-      ),
-    );
-  }
-}
-
-/// A warm gradient standing in for a camera pass-through, so the surfaces on
-/// top of it have something worth filtering.
-class _Backdrop extends StatelessWidget {
-  const _Backdrop();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Positioned.fill(
-      child: GlimmerBackdrop(
-        colors: [
-          Color(0xFF3E6B80),
-          Color(0xFF8A7434),
-          Color(0xFF54406B),
-        ],
       ),
     );
   }

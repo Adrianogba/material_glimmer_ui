@@ -305,14 +305,6 @@ Minimum touch heights do not change with it. A medium button is 48, a large one
   Pass `GlimmerTextSelection.controls`, `.contextMenuBuilder` and `.magnifier`
   to a plain `TextField` to get them there too.
 
-## What it was read against
-
-[doc/reference.md](doc/reference.md) records the exact upstream revision the
-ideas were read from: the git tree and blob ids of every file, and the date.
-`tool/fetch_reference.py` refreshes both the local mirror and that record. The
-mirror itself is not committed and not published, because it is Google's code
-under Apache 2.0 rather than ours.
-
 ## Not done yet
 
 This is 0.6.0, and these are the edges. None of them is a surprise waiting to

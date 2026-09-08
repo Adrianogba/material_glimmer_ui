@@ -428,6 +428,11 @@ class _GlimmerProgressPainter extends CustomPainter {
     final rect = Offset.zero & size;
     final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(999));
 
+    // The bloom goes down first and outside the clip. Light that cannot leave
+    // the track is not a glow, it is a softer stretch of track, which is what
+    // it looked like when this was drawn inside the clip with everything else.
+    if (value == null) _sweepBloom(canvas, size);
+
     // The same track and graded edge the slider carries, so a bar in a list of
     // surfaces reads as part of the system rather than as a plain rule.
     canvas
@@ -486,33 +491,59 @@ class _GlimmerProgressPainter extends CustomPainter {
     );
   }
 
-  void _sweepHighlight(Canvas canvas, Size size) {
-    // The highlight is wider than a block and tapers to nothing at both ends,
-    // which is what makes it read as light passing rather than as an object
-    // sliding. It starts fully off one end and finishes fully off the other.
+  /// Where the travelling highlight sits, or null when there is no room.
+  ///
+  /// It is wider than a block and tapers to nothing at both ends, which is what
+  /// makes it read as light passing rather than as an object sliding. It starts
+  /// fully off one end and finishes fully off the other.
+  Rect? _sweepBand(Size size) {
     final span = size.width * 0.42;
     final travel = size.width + span;
     final centre = (-span / 2) + (travel * sweep);
     final band = Rect.fromLTWH(centre - (span / 2), 0, span, size.height);
-    if (band.width <= 0) return;
+    return band.width <= 0 ? null : band;
+  }
 
+  void _sweepHighlight(Canvas canvas, Size size) {
+    final band = _sweepBand(size);
+    if (band == null) return;
+
+    canvas.drawRect(band, Paint()..shader = _highlightShader(band));
+  }
+
+  /// The light the highlight throws past the edges of the track.
+  ///
+  /// Drawn outside the clip, taller than the bar and blurred, so it reads as a
+  /// glow travelling under the surface rather than as a bright patch of track.
+  void _sweepBloom(Canvas canvas, Size size) {
+    final band = _sweepBand(size);
+    if (band == null) return;
+    final bloom = Rect.fromLTRB(
+      band.left,
+      band.top - size.height,
+      band.right,
+      band.bottom + size.height,
+    );
     canvas.drawRect(
-      band,
+      bloom,
       Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [
-            active.withValues(alpha: 0),
-            active,
-            Color.lerp(active, tint, 0.45)!,
-            active,
-            active.withValues(alpha: 0),
-          ],
-          stops: const [0, 0.32, 0.5, 0.68, 1],
-        ).createShader(band),
+        ..shader = _highlightShader(band)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, size.height * 0.9),
     );
   }
+
+  Shader _highlightShader(Rect band) => LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: [
+          active.withValues(alpha: 0),
+          active,
+          Color.lerp(active, tint, 0.45)!,
+          active,
+          active.withValues(alpha: 0),
+        ],
+        stops: const [0, 0.32, 0.5, 0.68, 1],
+      ).createShader(band);
 
   @override
   bool shouldRepaint(_GlimmerProgressPainter old) =>
