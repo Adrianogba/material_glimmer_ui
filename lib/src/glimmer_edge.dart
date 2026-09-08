@@ -39,16 +39,27 @@ class GlimmerEdge {
 
   /// The resting edge on a light ground.
   ///
-  /// The dark corners are pale greys, which is right against black and wrong
-  /// against white: the far corner is the brightest of the four, and on a light
-  /// background it lands as a white smear along the bottom of every
-  /// component. Light still comes from the top-left, so the highlight stays
-  /// there and the rest of the ring becomes shade instead of glare.
+  /// Light comes from the top-left in both themes, because that is a fact
+  /// about light rather than a fact about the palette. Inverting the dark ring
+  /// instead would put the bright stop at the bottom-right, and a form lit from
+  /// below reads as pressed into the page rather than raised off it.
+  ///
+  /// What changes is which direction has room. On `#303030` there is most of a
+  /// stop of headroom upward, so the dark ring is a highlight arc at the
+  /// top-left and nothing anywhere else. On white there is none at all: a white
+  /// highlight on a white surface is zero by definition. So the same shape is
+  /// drawn in shade, and the lighting is carried by how steeply the shade
+  /// deepens away from the light, not by a bright stop.
+  ///
+  /// The spread matters more than the depth. These stops run 0, -0.06, -0.20
+  /// and -0.46 in luminance against the surface, which is about the swing the
+  /// dark ring has. An even outline of roughly equal stops is what made the
+  /// light theme read as a flat rectangle with a border.
   const GlimmerEdge.idleLight()
-      : topLeft = const Color(0xE6FFFFFF),
-        topRight = const Color(0x1A101418),
-        bottomRight = const Color(0x2E101418),
-        bottomLeft = const Color(0x20101418);
+      : topLeft = const Color(0x00101418),
+        topRight = const Color(0x07101418),
+        bottomRight = const Color(0x42101418),
+        bottomLeft = const Color(0x1A101418);
 
   /// The focused edge, derived from [focal].
   ///
