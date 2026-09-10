@@ -307,7 +307,7 @@ Minimum touch heights do not change with it. A medium button is 48, a large one
 
 ## Not done yet
 
-This is 0.6.0, and these are the edges. None of them is a surprise waiting to
+This is 0.7.0, and these are the edges. None of them is a surprise waiting to
 be found; they are listed here so you can decide whether they matter to you.
 
 - **Reduced motion is not honoured.** Nothing reads

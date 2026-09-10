@@ -3,6 +3,80 @@
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and [Semantic Versioning](https://semver.org/).
 
+## 0.7.0
+
+The light theme was the reason for this one. A light card read as a flat
+rectangle with a border while the dark one read as a raised pane, and measuring
+the two rings against the surfaces they sit on showed why: they were not the
+same idea in different colours.
+
+The minor version moves rather than the patch because a public constant was
+removed. See "Removed" below.
+
+### Changed
+
+- The resting edge on a light ground. Measured in luminance against its own
+  surface, the dark ring ran +0.491, +0.010, -0.003, +0.103 clockwise from the
+  top-left: one bright arc where the light lands, nothing anywhere else. The
+  light ring ran 0.000, -0.201, -0.336, -0.241, with only 0.14 between the
+  lightest and darkest visible stop. A ring of roughly equal shade is an
+  outline, not lighting.
+
+  Inverting the dark ring is not the fix. That puts the bright stop at the
+  bottom-right, and a form lit from below reads as pressed into the page rather
+  than raised off it. Light comes from the top-left in both themes because that
+  is a fact about light rather than about the palette.
+
+  What differs is which direction has room. `#303030` has most of a stop of
+  headroom upward, so dark can say everything with a highlight. White has none:
+  a white highlight on a white surface is zero by definition, which is exactly
+  what the old top-left stop measured. The light ring now says the same thing
+  in shade, and carries the lighting in how steeply that shade deepens away
+  from the light. The stops are 0, -0.06, -0.20 and -0.46, a swing of 0.461
+  against dark's 0.495. The spread was the missing part, not the depth.
+
+- `GlimmerRefreshIndicator` holds one continuous value while it works. Releasing
+  a pull used to run the ambient envelope from zero, and that envelope starts at
+  zero, so the edge fell from whatever the pull had reached to a fixed floor in
+  a single frame and then sawed between that floor and full every two seconds.
+  A jump at the moment the finger lifts reads as a fault. The pull now eases
+  into the hold over 260 ms, and a tapered highlight travels the lit edge on a
+  loop while the work runs. That is the same shape `GlimmerProgressBar` sends
+  along its track and `GlimmerCircularProgress` sends around its ring, so "still
+  going" looks the same across the kit instead of being invented per widget.
+
+- `GlimmerProgressBar`'s indeterminate highlight glows. It was drawn inside the
+  track's clip, so it could soften but never leave, and read as a brighter
+  stretch of track rather than as light. The bloom is drawn before the clip now,
+  taller than the bar, and spills above and below it.
+
+### Added
+
+- `GlimmerRefreshIndicator.workingLevel`, the brightness the edge holds while a
+  refresh runs, along with `travelDuration` and `settleIntoWork` for the
+  travelling highlight and the ease into that hold.
+
+### Removed
+
+- `GlimmerRefreshIndicator.workingFloor`. The refresh no longer has a floor to
+  breathe up from, so the constant no longer describes anything. Use
+  `workingLevel` instead, which is the level the edge settles to rather than the
+  bottom of a pulse.
+
+### Example
+
+- The gallery opened on a section called Glass: frosted cards over a vivid
+  gradient. It looked good and it was the wrong argument. That composition is a
+  pass-through mock, which is a display-glasses idea, and a phone has nothing
+  behind the screen. It now opens on cards, actions, a stack and a list.
+- Foundations loses Type and Depth. A type specimen is odd in a package that
+  ships no fonts, and the depth ramp was abstract. In their place is an Edge
+  section showing a resting and a focused surface side by side, which is the
+  thing the kit is named after.
+- The "Immersive controls" switch dimmed nothing. It is the ambient sweep now,
+  and drives the card directly beneath it, so what it does is visible without
+  scrolling.
+
 ## 0.6.0
 
 First preview. The token set, the theme and the widget library are all here and

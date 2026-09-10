@@ -1,6 +1,6 @@
 name: material_glimmer_ui
 description: A Flutter UI kit of glass surfaces and lit edges. An app widget, a theme, a full token set and a widget library. Inspired by Jetpack Compose Glimmer and Material Design.
-version: 0.6.0
+version: 0.7.0
 homepage: https://github.com/Adrianogba/material_glimmer_ui
 repository: https://github.com/Adrianogba/material_glimmer_ui
 issue_tracker: https://github.com/Adrianogba/material_glimmer_ui/issues
